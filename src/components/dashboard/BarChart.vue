@@ -1,4 +1,3 @@
-// components/BarChart.vue
 <template>
   <div class="bg-white rounded-lg shadow p-6">
     <div class="flex justify-between items-center mb-4">
@@ -46,7 +45,7 @@ ChartJS.register(
 const props = defineProps({
   title: {
     type: String,
-    default: 'Customer Map'
+    default: '나는 BarChart다'
   }
 });
 

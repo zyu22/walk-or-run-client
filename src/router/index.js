@@ -1,7 +1,7 @@
 // router/index.js
 import { createRouter, createWebHistory } from 'vue-router';
 import HomeView from '../views/HomeView.vue';
-import ChallengeView from '../views/challenge/ChallengeView.vue'
+import ChallengeView from '../views/ChallengeView.vue'
 
 const routes = [
   {
@@ -17,7 +17,7 @@ const routes = [
     path: '/challenge',
     name: 'challenge',
     component : ChallengeView
-  }
+  },
 ];
 
 const router = createRouter({

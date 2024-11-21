@@ -51,6 +51,7 @@
           <span class="mr-3">🚪</span>
           Log out
         </button>
+        
       </div>
     </div>
   </template>
