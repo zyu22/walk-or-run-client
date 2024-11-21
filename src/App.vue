@@ -1,5 +1,3 @@
-<script setup></script>
-
 <template>
   <header>
     <div>
@@ -12,5 +10,7 @@
 
   <RouterView />
 </template>
+
+<script setup></script>
 
 <style scoped></style>
