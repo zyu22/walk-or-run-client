@@ -33,17 +33,53 @@
           <span class="mr-3">👥</span>
           Follow
         </router-link>
+        <!-- MyPage with submenu -->
+      <div class="space-y-2">
+        <button 
+          @click="toggleMyPage" 
+          class="flex items-center justify-between w-full p-3 rounded-lg hover:bg-orange-50 transition-colors"
+          :class="{ 'bg-orange-50 text-orange-500': isMyPageActive }"
+        >
+          <div class="flex items-center">
+            <span class="mr-3">⚙️</span>
+            MyPage
+          </div>
+          <span :class="{ 'transform rotate-180': isMyPageOpen }">▼</span>
+        </button>
+        
+        <!-- Submenu -->
+        <div v-show="isMyPageOpen" class="pl-6 space-y-2">
+          <router-link 
+            to="/mypage/info" 
+            class="flex items-center p-2 rounded-lg hover:bg-orange-50 transition-colors"
+            :class="{ 'bg-orange-50 text-orange-500': isCurrentRoute('info') }"
+          >
+            <span class="mr-3">👤</span>
+            내 정보 관리
+          </router-link>
+          
+          <router-link 
+            to="/mypage/goal" 
+            class="flex items-center p-2 rounded-lg hover:bg-orange-50 transition-colors"
+            :class="{ 'bg-orange-50 text-orange-500': isCurrentRoute('goal') }"
+          >
+            <span class="mr-3">🎯</span>
+            목표 설정
+          </router-link>
+        </div>
+      </div>
       </nav>
   
+
       <div class="mt-auto pt-6">
         <router-link 
-          to="/settings" 
-          class="flex items-center p-3 rounded-lg hover:bg-orange-50 transition-colors"
-          :class="{ 'bg-orange-50 text-orange-500': isCurrentRoute('settings') }"
-        >
-          <span class="mr-3">⚙️</span>
-          Setting
-        </router-link>
+        to="/upload" 
+        class="flex items-center p-3 rounded-lg hover:bg-orange-50 transition-colors"
+        :class="{ 'bg-orange-50 text-orange-500': isCurrentRoute('upload') }"
+      >
+        <span class="mr-3">📤</span>
+        Upload
+      </router-link>
         <button 
           @click="handleLogout" 
           class="flex items-center p-3 rounded-lg hover:bg-orange-50 transition-colors w-full"
@@ -57,21 +93,29 @@
   </template>
   
   <script setup>
-  import { useRouter, useRoute } from 'vue-router';
-  
-  const router = useRouter();
-  const route = useRoute();
-  
-  // 현재 라우트 확인 함수
-  const isCurrentRoute = (path) => {
-    if (path === '/') {
-      return route.path === '/';
-    }
-    return route.path.includes(path);
-  };
-  
-  const handleLogout = () => {
-    // 로그아웃 로직 구현
-    router.push('/login');
-  };
-  </script>
+import { ref, computed } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
+
+const router = useRouter();
+const route = useRoute();
+const isMyPageOpen = ref(false);
+
+const isMyPageActive = computed(() => {
+  return route.path.includes('/mypage');
+});
+
+const isCurrentRoute = (path) => {
+  if (path === '/') {
+    return route.path === '/';
+  }
+  return route.path.includes(path);
+};
+
+const toggleMyPage = () => {
+  isMyPageOpen.value = !isMyPageOpen.value;
+};
+
+const handleLogout = () => {
+  router.push('/login');
+};
+</script>
