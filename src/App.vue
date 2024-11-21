@@ -4,7 +4,7 @@
   <header>
     <div>
       <nav>
-        <RouterLink to="/">링크 Home</RouterLink>
+        
       </nav>
     </div>
   </header>
