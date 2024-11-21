@@ -11,7 +11,7 @@
 
 <script setup>
 import { useRouter } from 'vue-router'
-import Login from '@/components/user/Login.vue'
+import Login from '@/components/user/Login.vue';
 
 const router = useRouter()
 

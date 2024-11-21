@@ -1,7 +1,8 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import HomeView from '../views/HomeView.vue';
-import ChallengeView from '../views/challenge/ChallengeView.vue'
-import UserView from '../views/UserView.vue'
+import ChallengeView from '../views/ChallengeView.vue';
+import UserView from '../views/UserView.vue';
+
 const routes = [
   {
     path: '/',
