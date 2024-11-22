@@ -1,6 +1,6 @@
 // views/admin/AdminView.vue
 <template>
-  <Sidebar>
+  <Sidebar />
     <div class="p-8">
       <header class="mb-8">
         <div class="flex justify-between items-center">
@@ -38,12 +38,11 @@
         <h2>Test Challenge Board</h2>
       </div>
     </div>
-  </Sidebar>
 </template>
 
 <script setup>
 import { ref } from 'vue'
-import Sidebar from '@/components/admin/Sidebar.vue'
+import Sidebar from '@/components/admin/AdminSidebar.vue'
 import StatsCard from '@/components/admin/StatsCard.vue'
 import ActivityFeed from '@/components/admin/ActivityFeed.vue'
 import UserStats from '@/components/admin/UserStats.vue'
