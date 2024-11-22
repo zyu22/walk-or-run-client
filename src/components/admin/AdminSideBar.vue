@@ -112,6 +112,8 @@
 import { ref, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 
+const emit = defineEmits(['logout']) // emit 정의 추가
+
 const router = useRouter()
 const route = useRoute()
 const isChallengeOpen = ref(false)
@@ -127,6 +129,6 @@ const toggleChallenge = () => {
 }
 
 const handleLogout = () => {
-  router.push('/login')
+  emit('logout') // emit을 통해 부모 컴포넌트로 이벤트 전달
 }
 </script>

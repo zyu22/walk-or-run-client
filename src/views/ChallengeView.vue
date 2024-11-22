@@ -78,7 +78,7 @@
 
 <script setup>
 import { ref, computed } from 'vue';
-import SideBar from '../components/dashboard/SideBar.vue';
+import SideBar from '../components/SideBar.vue';
 import ChallengeDetailModal from '../components/dashboard/ChallengeDetailModal.vue';
 
 const challengeTypes = ['All', 'Daily', 'Weekly', 'Monthly', 'Event'];
