@@ -4,7 +4,12 @@ import ChallengeView from '../views/ChallengeView.vue';
 import UserView from '../views/UserView.vue';
 import AdminView from '../views/AdminView.vue';
 import { ContainerWithChildren } from 'postcss/lib/container';
-import ChallengeBoardView from '@/components/admin/ChallengeBoard.vue';
+import SettingChallenge from '@/components/admin/ChallengeBoard.vue';
+import SettingScheduleChallenge from '@/components/admin/ChallengeBoard.vue';
+import Login from '@/components/user/login.vue';
+import MyInfo from '@/components/user/myInfo.vue';
+import MyGoal from '@/components/user/myGoal.vue';
+import MyPassword from '@/components/user/myPassword.vue';
 
 const routes = [
   {
@@ -29,11 +34,12 @@ const routes = [
       {
         path: 'settingChallenge',
         name: 'admin/setting/challenge',
-        component: ChallengeBoardView
+        component: SettingChallenge
       },
       {
         path: 'settingScheduleChallenge',
-        name: 'admin/setting/scheduleChallenge'
+        name: 'admin/setting/scheduleChallenge',
+        component: SettingScheduleChallenge
       }
       
     ]
@@ -44,19 +50,24 @@ const routes = [
       component: UserView,
       children: [
         {
+          path: 'login',  // /user/info로 접근
+          name: 'login',
+          component: Login
+        },
+        {
           path: 'info',  // /user/info로 접근
           name: 'myInfo',
-          component: () => import('@/components/user/myInfo.vue')
+          component: MyInfo
         },
         {
           path: 'password',  // /user/password로 접근
           name: 'myPassword',
-          component: () => import('@/components/user/myPassword.vue')
+          component: MyPassword
         },
         {
           path: 'goal',  // /user/goal로 접근
           name: 'myGoal',
-          component: () => import('@/components/user/myGoal.vue')
+          component: MyGoal
         }
       ]
     },

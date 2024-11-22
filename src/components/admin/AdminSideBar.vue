@@ -58,7 +58,7 @@
               <div v-show="isChallengeOpen" 
                    class="mt-1 ml-4 space-y-1">
                 <router-link 
-                  to="/admin/challenge/setting" 
+                  to="/admin/setting/challenge" 
                   class="flex items-center px-4 py-2 rounded-lg text-gray-600 hover:bg-white transition-colors text-sm"
                   :class="{ 'bg-orange-50 text-orange-500 font-medium': isCurrentRoute('info') }"
                 >
@@ -67,7 +67,7 @@
                 </router-link>
                 
                 <router-link 
-                  to="/admin/challenge/schedule" 
+                  to="admin/setting/scheduleChallenge" 
                   class="flex items-center px-4 py-2 rounded-lg text-gray-600 hover:bg-white transition-colors text-sm"
                   :class="{ 'bg-orange-50 text-orange-500 font-medium': isCurrentRoute('goal') }"
                 >
