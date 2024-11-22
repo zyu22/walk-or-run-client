@@ -3,6 +3,9 @@ import HomeView from '../views/HomeView.vue';
 import ChallengeView from '../views/ChallengeView.vue';
 import UserView from '../views/UserView.vue';
 import AdminView from '../views/AdminView.vue';
+import FollowView from '../views/FollowView.vue';
+import UploadView from '../views/UploadView.vue';
+
 import SettingChallenge from '@/components/admin/SettingChallenge.vue';
 import SettingScheduleChallenge from '@/components/admin/SettingChallenge.vue';
 import login from '@/components/user/login.vue';
@@ -10,7 +13,7 @@ import myInfo from '@/components/user/myInfo.vue';
 import myGoal from '@/components/user/myGoal.vue';
 import myPassword from '@/components/user/myPassword.vue';
 import myGoalForm from '@/components/user/myGoalForm.vue';
-import follow from '@/components/follow/follow.vue';
+import upload from '@/components/upload/upload.vue';
 
 const routes = [
   {
@@ -30,7 +33,7 @@ const routes = [
   {
     path: '/follow',
     name: 'follow',
-    component : follow
+    component : FollowView
   },
   {
     path: '/admin',
@@ -79,6 +82,18 @@ const routes = [
           path: 'goal/form',
           name: 'mygoalForm',
           component: myGoalForm
+        },
+      ]
+    },
+    {
+      path: '/upload',
+      name: 'upload',
+      component : UploadView,
+      children: [
+        {
+          path: '', // 기본 경로
+          name: 'uploadDefault',
+          component: upload
         },
       ]
     },
