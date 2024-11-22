@@ -3,7 +3,7 @@
   <div class="flex items-center gap-4 bg-white p-3 rounded-lg shadow-sm">
     <div class="relative flex items-center gap-4">
       <div>
-        <span class="text-sm text-gray-500 mr-2">날짜</span>
+        
         <input
           type="date"
           v-model="startDate"
@@ -25,9 +25,22 @@
 
       <button 
         @click="handleSearch" 
-        class="ml-4 px-6 py-2 bg-[#ff6f3b] text-white rounded-lg hover:bg-[#ff825c] transition-colors focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2"
+        class="ml-4 px-6 py-2 text-white rounded-lg hover:bg-[#ff825c] transition-colors focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2"
       >
-        조회
+      <svg 
+        xmlns="http://www.w3.org/2000/svg" 
+        class="h-5 w-5 text-gray-600" 
+        fill="none" 
+        viewBox="0 0 24 24" 
+        stroke="currentColor"
+      >
+        <path 
+          stroke-linecap="round" 
+          stroke-linejoin="round" 
+          stroke-width="2" 
+          d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" 
+        />
+      </svg>
       </button>
     </div>
   </div>

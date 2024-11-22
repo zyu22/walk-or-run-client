@@ -27,8 +27,13 @@ const routes = [
     component: AdminView,
     children: [
       {
-        path: '/admin/challenge',
+        path: 'settingChallenge',
+        name: 'admin/setting/challenge',
         component: ChallengeBoardView
+      },
+      {
+        path: 'settingScheduleChallenge',
+        name: 'admin/setting/scheduleChallenge'
       }
       
     ]
