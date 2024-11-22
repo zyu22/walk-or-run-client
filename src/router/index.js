@@ -9,11 +9,15 @@ import UploadView from '../views/UploadView.vue';
 import SettingChallenge from '@/components/admin/SettingChallenge.vue';
 import SettingScheduleChallenge from '@/components/admin/SettingChallenge.vue';
 import login from '@/components/user/login.vue';
+import register from '@/components/user/register.vue';
 import myInfo from '@/components/user/myInfo.vue';
 import myGoal from '@/components/user/myGoal.vue';
 import myPassword from '@/components/user/myPassword.vue';
 import myGoalForm from '@/components/user/myGoalForm.vue';
 import upload from '@/components/upload/upload.vue';
+import FindEmail from '@/components/user/findEmail.vue';
+import FindPassword from '@/components/user/findPassword.vue';
+import ResetPassword from '@/components/user/resetPassword.vue';
 
 const routes = [
   {
@@ -62,6 +66,26 @@ const routes = [
           path: 'login',  // /user/info로 접근
           name: 'login',
           component: login
+        },
+        {
+          path: 'register',  // /user/info로 접근
+          name: 'register',
+          component: register
+        },
+        {
+          path: 'findEmail',  // /user/info로 접근
+          name: 'findEmail',
+          component: FindEmail
+        },
+        {
+          path: 'findPassword',  // /user/info로 접근
+          name: 'findPassword',
+          component: FindPassword
+        },
+        {
+          path: 'resetPassword',  // /user/info로 접근
+          name: 'resetPassword',
+          component: ResetPassword
         },
         {
           path: 'info',  // /user/info로 접근
