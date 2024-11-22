@@ -1,7 +1,5 @@
-// components/user/Login.vue
-
 <template>
-  <div class="flex items-center justify-center min-h-screen">
+  <div class="min-h-screen bg-gray-50 flex items-center justify-center">
     <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
       <!-- Logo -->
       <div class="flex justify-center mb-8">
@@ -11,7 +9,7 @@
           class="h-24 w-auto"
         />
       </div>
-
+      
       <h2 class="text-2xl font-bold mb-6 text-center">Welcome Back!</h2>
       
       <form @submit.prevent="handleSubmit" class="space-y-4">
@@ -21,7 +19,6 @@
             type="email" 
             v-model="email" 
             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500"
-            required
           />
         </div>
         
@@ -31,7 +28,6 @@
             type="password" 
             v-model="password"
             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500"
-            required
           />
         </div>
 
@@ -43,7 +39,7 @@
           {{ isLoading ? 'Loading...' : 'Login' }}
         </button>
 
-        <p v-if="error" class="text-red-500 text-sm text-center mt-2">{{ error }}</p>
+        <p v-if="error" class="text-red-500 text-sm text-center">{{ error }}</p>
       </form>
     </div>
   </div>
@@ -64,25 +60,19 @@ const handleSubmit = async () => {
     isLoading.value = true;
     error.value = '';
 
-    // TODO: 실제 API 호출로 대체
-    // 임시 로그인 로직
+    // Mock login - replace with actual API call
     const response = await mockLogin(email.value, password.value);
-    
     emit('login-success', response.user);
   } catch (err) {
-    error.value = err.message || '로그인에 실패했습니다.';
+    error.value = err.message;
   } finally {
     isLoading.value = false;
   }
 };
 
-// 임시 로그인 함수 (실제 구현 시 API 호출로 대체)
 const mockLogin = async (email, password) => {
-  await new Promise(resolve => setTimeout(resolve, 1000)); // 임시 딜레이
+  await new Promise(resolve => setTimeout(resolve, 1000));
 
-  console.log(email);
-  console.log(password);
-  // 테스트용 계정
   if (email === 'admin@test.com' && password === 'admin') {
     return {
       user: {

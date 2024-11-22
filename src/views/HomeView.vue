@@ -62,7 +62,7 @@
 
 <script setup>
 import { ref, reactive } from 'vue';
-import SideBar from '../components/dashboard/SideBar.vue';
+import SideBar from '../components/SideBar.vue';
 import MetricCard from '../components/dashboard/MetricCard.vue';
 import DonutChart from '../components/dashboard/DonutChart.vue';
 import LineChart from '../components/dashboard/LineChart.vue';
