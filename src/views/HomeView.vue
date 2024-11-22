@@ -1,16 +1,14 @@
 <template>
-  <div class="flex min-h-screen bg-gray-50">
+  <div class="flex">
+    <!-- SideBar -->
     <SideBar />
     
-    <div class="flex-1 p-8">
+    <div class="flex-1 p-8 mr-6 h-[calc(100vh-3rem)] bg-gray-50 rounded-2xl">
       <!-- 상단 날짜 선택기와 사용자 정보 -->
       <div class="flex justify-between items-center mb-8">
         <DateRangePicker 
           @update-date-range="handleDateRangeUpdate"
         />
-        <div class="flex items-center gap-2">
-          <span class="text-gray-600">안녕하세요, 포미님!</span>
-        </div>
       </div>
 
       <!-- 상단 통계 카드들 -->
