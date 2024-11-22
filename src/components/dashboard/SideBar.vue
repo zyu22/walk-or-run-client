@@ -59,12 +59,21 @@
           </router-link>
           
           <router-link 
+            to="/mypage/password" 
+            class="flex items-center p-2 rounded-lg hover:bg-orange-50 transition-colors"
+            :class="{ 'bg-orange-50 text-orange-500': isCurrentRoute('password') }"
+          >
+            <span class="mr-3">🔒</span>
+            내 비밀번호 관리
+          </router-link>
+
+          <router-link 
             to="/mypage/goal" 
             class="flex items-center p-2 rounded-lg hover:bg-orange-50 transition-colors"
             :class="{ 'bg-orange-50 text-orange-500': isCurrentRoute('goal') }"
           >
             <span class="mr-3">🎯</span>
-            목표 설정
+            내 목표 관리
           </router-link>
         </div>
       </div>
