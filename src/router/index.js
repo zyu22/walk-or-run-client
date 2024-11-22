@@ -3,9 +3,8 @@ import HomeView from '../views/HomeView.vue';
 import ChallengeView from '../views/ChallengeView.vue';
 import UserView from '../views/UserView.vue';
 import AdminView from '../views/AdminView.vue';
-import { ContainerWithChildren } from 'postcss/lib/container';
-import SettingChallenge from '@/components/admin/ChallengeBoard.vue';
-import SettingScheduleChallenge from '@/components/admin/ChallengeBoard.vue';
+import SettingChallenge from '@/components/admin/SettingChallenge.vue';
+import SettingScheduleChallenge from '@/components/admin/SettingChallenge.vue';
 import login from '@/components/user/login.vue';
 import myInfo from '@/components/user/myInfo.vue';
 import myGoal from '@/components/user/myGoal.vue';
@@ -33,13 +32,13 @@ const routes = [
     component: AdminView,
     children: [
       {
-        path: 'settingChallenge',
-        name: 'admin/setting/challenge',
+        path: 'adminChallenge',
+        name: 'adminChallenge',
         component: SettingChallenge
       },
       {
-        path: 'settingScheduleChallenge',
-        name: 'admin/setting/scheduleChallenge',
+        path: 'scheduleChallenge',
+        name: 'adminScheduleChallenge',
         component: SettingScheduleChallenge
       }
       

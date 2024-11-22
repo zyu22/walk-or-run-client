@@ -22,7 +22,7 @@
             <router-link 
               to="/admin" 
               class="flex items-center px-4 py-3 mb-2 rounded-lg text-gray-600 hover:bg-white transition-colors"
-              :class="{ 'bg-orange-50 text-orange-500 font-medium': isCurrentRoute('admin') }"
+              :class="{ 'bg-orange-50 text-orange-500 font-medium': route.path === '/admin' }"
             >
               <span class="mr-3">📊</span>
               Dashboard
@@ -31,18 +31,18 @@
             <router-link 
               to="/admin/user" 
               class="flex items-center px-4 py-3 mb-2 rounded-lg text-gray-600 hover:bg-white transition-colors"
-              :class="{ 'bg-orange-50 text-orange-500 font-medium': isCurrentRoute('admin/user') }"
+              :class="{ 'bg-orange-50 text-orange-500 font-medium': route.path === '/admin/user' }"
             >
               <span class="mr-3">⚙️</span>
               사용자 관리
             </router-link>
 
-            <!-- MyPage -->
+            <!-- Challenge Management with submenu -->
             <div class="mb-2">
               <button 
-                @click="toggleMyPage" 
+                @click="toggleChallenge" 
                 class="flex items-center justify-between w-full px-4 py-3 rounded-lg text-gray-600 hover:bg-white transition-colors"
-                :class="{ 'bg-orange-50 text-orange-500 font-medium': isChallengeActive }"
+                :class="{ 'bg-orange-50 text-orange-500 font-medium': isChallengeMenuActive }"
               >
                 <div class="flex items-center">
                   <span class="mr-3">🎯</span>
@@ -58,18 +58,18 @@
               <div v-show="isChallengeOpen" 
                    class="mt-1 ml-4 space-y-1">
                 <router-link 
-                  to="/admin/setting/challenge" 
+                  :to="{ name: 'adminChallenge' }" 
                   class="flex items-center px-4 py-2 rounded-lg text-gray-600 hover:bg-white transition-colors text-sm"
-                  :class="{ 'bg-orange-50 text-orange-500 font-medium': isCurrentRoute('info') }"
+                  :class="{ 'bg-orange-50 text-orange-500 font-medium': route.name === 'adminChallenge' }"
                 >
                   <span class="mr-3">1️⃣</span>
                   챌린지 관리
                 </router-link>
                 
                 <router-link 
-                  to="admin/setting/scheduleChallenge" 
+                  :to="{ name: 'adminScheduleChallenge' }" 
                   class="flex items-center px-4 py-2 rounded-lg text-gray-600 hover:bg-white transition-colors text-sm"
-                  :class="{ 'bg-orange-50 text-orange-500 font-medium': isCurrentRoute('goal') }"
+                  :class="{ 'bg-orange-50 text-orange-500 font-medium': route.name === 'adminScheduleChallenge' }"
                 >
                   <span class="mr-3">2️⃣</span>
                   반복 챌린지 관리
@@ -83,7 +83,7 @@
             <router-link 
               to="/upload" 
               class="flex items-center px-4 py-3 mb-2 rounded-lg text-gray-600 hover:bg-white transition-colors"
-              :class="{ 'bg-orange-50 text-orange-500 font-medium': isCurrentRoute('upload') }"
+              :class="{ 'bg-orange-50 text-orange-500 font-medium': route.path === '/upload' }"
             >
               <span class="mr-3">📤</span>
               Upload
@@ -109,7 +109,6 @@
 </template>
 
 <script setup>
-// script 부분은 이전과 동일
 import { ref, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 
@@ -117,15 +116,13 @@ const router = useRouter()
 const route = useRoute()
 const isChallengeOpen = ref(false)
 
-const isChallengeActive = computed(() => {
-  return route.path.includes('/admin/challenge')
+// Challenge 메뉴가 활성화되어야 하는지 확인
+const isChallengeMenuActive = computed(() => {
+  return route.name === 'adminChallenge' || route.name === 'adminScheduleChallenge'
 })
 
-const isCurrentRoute = (path) => {
-  return route.path.includes(path)
-}
-
-const toggleMyPage = () => {
+// 챌린지 메뉴 토글
+const toggleChallenge = () => {
   isChallengeOpen.value = !isChallengeOpen.value
 }
 

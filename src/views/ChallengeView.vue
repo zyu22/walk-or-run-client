@@ -1,9 +1,5 @@
 // views/ChallengeView.vue
 <template>
-  <div class="flex">
-    <SideBar />
-    
-    <div class="flex-1 p-8 mr-6 h-[calc(100vh-3rem)] bg-gray-50 rounded-2xl">
       <!-- 헤더 -->
       <div class="flex justify-between items-center mb-8">
         <h1 class="text-2xl font-bold">Challenge</h1>
@@ -78,8 +74,6 @@
         :challenge="selectedChallenge"
         @close="closeModal"
       />
-    </div>
-  </div>
 </template>
 
 <script setup>
