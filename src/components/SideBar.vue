@@ -148,6 +148,6 @@ const toggleMyPage = () => {
 }
 
 const handleLogout = () => {
-  router.push('/login')
+  router.push('/user/login')
 }
 </script>

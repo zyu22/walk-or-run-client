@@ -1,16 +1,23 @@
 <template>
-  <header>
-    <div class="flex mt-6">
-      <SideBar />
-      <div class="flex-1 p-8 mr-6 h-[calc(100vh-3rem)] bg-gray-50 rounded-2xl">
-        <RouterView />
-      </div>
-    </div>
-  </header>
+  <RouterView />
 </template>
 
 <script setup>
-import SideBar from './components/dashboard/SideBar.vue';
-</script>
+import { onMounted } from 'vue';
+import { useRouter } from 'vue-router';
 
-<style scoped></style>
+const router = useRouter();
+
+onMounted(() => {
+  checkLoginStatus();
+});
+
+const checkLoginStatus = () => {
+  const userStr = localStorage.getItem('user');
+  const isLoggedInStr = localStorage.getItem('isLoggedIn');
+  
+  if (!userStr || isLoggedInStr !== 'true') {
+    router.push('/login');
+  }
+};
+</script>

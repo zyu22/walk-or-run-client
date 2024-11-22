@@ -1,10 +1,4 @@
 <template>
-  <div class="flex">
-    <!-- Sidebar -->
-    <Sidebar />
-    
-    <div class="flex-1 p-8 mr-6 h-[calc(100vh-3rem)] bg-gray-50 rounded-2xl">
-      <!-- 상단 헤더 영역 -->
       <div class="flex justify-between items-center mb-8">
         <!-- 좌측 타이틀 -->
         <div>
@@ -39,8 +33,7 @@
       <div class="bg-white p-6 rounded-xl shadow-sm">
         <ChallengeBoard />
       </div>
-    </div>
-  </div>
+
 </template>
 
 <script setup>
