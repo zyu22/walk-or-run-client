@@ -1,108 +1,92 @@
-// components/user/Login.vue
-
 <template>
   <div class="flex items-center justify-center min-h-screen">
     <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
-      <!-- Logo -->
-      <div class="flex justify-center mb-8">
-        <img 
-          src="@/assets/logo.png" 
-          alt="WalkOrRun" 
-          class="h-24 w-auto"
-        />
-      </div>
-
-      <h2 class="text-2xl font-bold mb-6 text-center">Welcome Back!</h2>
-      
-      <form @submit.prevent="handleSubmit" class="space-y-4">
+      <h2 class="text-2xl font-bold mb-6 text-center">로그인</h2>
+      <form @submit.prevent="handleLogin" class="space-y-4">
         <div>
-          <label class="block text-sm font-medium text-gray-700">Email</label>
-          <input 
-            type="email" 
-            v-model="email" 
+          <label class="block text-sm font-medium text-gray-700">이메일</label>
+          <input
+            type="email"
+            v-model="userEmail"
             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500"
             required
           />
         </div>
-        
         <div>
-          <label class="block text-sm font-medium text-gray-700">Password</label>
-          <input 
-            type="password" 
-            v-model="password"
+          <label class="block text-sm font-medium text-gray-700">비밀번호</label>
+          <input
+            type="password"
+            v-model="userPassword"
             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500"
             required
           />
         </div>
-
-        <button 
+        <button
           type="submit"
           class="w-full bg-orange-500 text-white py-2 px-4 rounded-md hover:bg-orange-600 transition-colors"
           :disabled="isLoading"
         >
-          {{ isLoading ? 'Loading...' : 'Login' }}
+          {{ isLoading ? '로딩중...' : '로그인' }}
         </button>
-
-        <p v-if="error" class="text-red-500 text-sm text-center mt-2">{{ error }}</p>
+        <p v-if="error" class="text-red-500 text-sm text-center">{{ error }}</p>
       </form>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
+import axios from 'axios';
+import { useUserStore } from '@/stores/user';
 
-const emit = defineEmits(['login-success']);
-
-const email = ref('');
-const password = ref('');
+const VITE_API_URL = import.meta.env.VITE_API_URL;
+const router = useRouter();
+const userEmail = ref('');
+const userPassword = ref('');
 const error = ref('');
 const isLoading = ref(false);
+const userStore = useUserStore();
 
-const handleSubmit = async () => {
+
+const handleLogin = async () => {
   try {
-    isLoading.value = true;
-    error.value = '';
+    const response = await axios.post(`${VITE_API_URL}/auth/login`, {
+      userEmail: userEmail.value,
+      userPassword: userPassword.value
+    });
 
-    // TODO: 실제 API 호출로 대체
-    // 임시 로그인 로직
-    const response = await mockLogin(email.value, password.value);
-    
-    emit('login-success', response.user);
-  } catch (err) {
-    error.value = err.message || '로그인에 실패했습니다.';
-  } finally {
-    isLoading.value = false;
+    if (response.status === 200) {
+      const accessToken = response.data.access_token;
+      const refreshToken = response.data.refresh_token;
+      console.log(accessToken);
+      console.log(refreshToken);
+      saveAuthTokens(accessToken, refreshToken);
+
+      // token 값에 있는 userId, userRole, userEmail pinia로 저장
+      userStore.updateUserInfo(accessToken);
+      
+      console.log('Login successful');
+    } else if (response.status === 401) {
+      console.error('Login failed: Invalid username or password');
+    } else {
+      console.error(`Login failed: ${response.status} - ${response.statusText}`);
+    }
+  } catch (error) {
+    if (error.response) {
+      // 서버 응답 오류
+      console.error(`Login failed: ${error.response.status} - ${error.response.data.message}`);
+    } else {
+      // 네트워크 오류 또는 기타 오류
+      console.error('Login failed:', error);
+    }
   }
 };
 
-// 임시 로그인 함수 (실제 구현 시 API 호출로 대체)
-const mockLogin = async (email, password) => {
-  await new Promise(resolve => setTimeout(resolve, 1000)); // 임시 딜레이
+const saveAuthTokens = (accessToken, refreshToken) => {
+  // local에 token 저장
+  localStorage.setItem('accessToken', accessToken);
+  localStorage.setItem('refreshToken', refreshToken);
+}
 
-  console.log(email);
-  console.log(password);
-  // 테스트용 계정
-  if (email === 'admin@test.com' && password === 'admin') {
-    return {
-      user: {
-        id: 1,
-        email: 'admin@test.com',
-        name: 'Admin',
-        role: 'ADMIN'
-      }
-    };
-  } else if (email === 'user@test.com' && password === 'user') {
-    return {
-      user: {
-        id: 2,
-        email: 'user@test.com',
-        name: 'User',
-        role: 'USER'
-      }
-    };
-  }
-
-  throw new Error('Invalid credentials');
-};
 </script>
