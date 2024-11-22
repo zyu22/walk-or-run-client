@@ -41,34 +41,6 @@
         </div>
       </div>
     </div>
-
-    <!-- 활동성 통계 -->
-    <div class="space-y-3">
-      <h3 class="text-sm font-medium">활동성 지표</h3>
-      <div class="grid grid-cols-3 gap-4">
-        <div>
-          <p class="text-sm text-gray-600">일간 활성</p>
-          <p class="mt-1">
-            <span class="text-lg font-medium">{{ stats.activityStats.dailyActive.toLocaleString() }}</span>
-            <span class="text-xs text-green-600 ml-1">{{ stats.growthRate.daily }}</span>
-          </p>
-        </div>
-        <div>
-          <p class="text-sm text-gray-600">주간 활성</p>
-          <p class="mt-1">
-            <span class="text-lg font-medium">{{ stats.activityStats.weeklyActive.toLocaleString() }}</span>
-            <span class="text-xs text-green-600 ml-1">{{ stats.growthRate.weekly }}</span>
-          </p>
-        </div>
-        <div>
-          <p class="text-sm text-gray-600">월간 활성</p>
-          <p class="mt-1">
-            <span class="text-lg font-medium">{{ stats.activityStats.monthlyActive.toLocaleString() }}</span>
-            <span class="text-xs text-green-600 ml-1">{{ stats.growthRate.monthly }}</span>
-          </p>
-        </div>
-      </div>
-    </div>
   </div>
 </template>
 
@@ -78,5 +50,17 @@ defineProps({
     type: Object,
     required: true
   }
-})
+});
 </script>
+
+// views/admin/AdminView.vue의 userStats 데이터를 다음과 같이 수정:
+const userStats = ref({
+  totalUsers: 3548,
+  activeUsers: 3150,
+  adminCount: 3,
+  membershipStats: [
+    { type: '일반 회원', count: 2850, percentage: 80.3 },
+    { type: 'PRO 회원', count: 580, percentage: 16.3 },
+    { type: '체험 회원', count: 118, percentage: 3.4 }
+  ]
+});

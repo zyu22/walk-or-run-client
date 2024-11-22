@@ -54,6 +54,7 @@
 
 <script setup>
 import { ref } from 'vue'
+import AdminSidebar from './AdminSidebar.vue';
 
 const challenges = ref([
   {
