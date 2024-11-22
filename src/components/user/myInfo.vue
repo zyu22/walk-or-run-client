@@ -1,6 +1,6 @@
 <!-- components/user/myInfo.vue -->
 <template>
-    <div class="max-w-md mx-auto p-20 ">
+    <div class="max-w-md mx-auto pt-20 px-8">
       <h1 class="text-2xl font-bold mb-8">내 정보 관리</h1>
    
       <form @submit.prevent="handleSubmit" class="space-y-6">
