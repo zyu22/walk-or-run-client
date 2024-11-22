@@ -5,6 +5,7 @@ import UserView from '../views/UserView.vue';
 import AdminView from '../views/AdminView.vue';
 import { ContainerWithChildren } from 'postcss/lib/container';
 import ChallengeBoardView from '@/components/admin/ChallengeBoard.vue';
+import Login from '@/components/user/login.vue';
 
 const routes = [
   {
@@ -38,6 +39,11 @@ const routes = [
       name: 'user',
       component: UserView,
       children: [
+        {
+          path: 'login',  // /user/info로 접근
+          name: 'login',
+          component: () => import('@/components/user/login.vue')
+        },
         {
           path: 'info',  // /user/info로 접근
           name: 'myInfo',

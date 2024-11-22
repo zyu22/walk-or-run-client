@@ -1,6 +1,6 @@
 // components/Login.vue
 <template>
-  <div class="max-w-md mx-auto p-8">
+  <div class="max-w-md mx-auto p-8 mt-40">
     <!-- 로고 -->
     <div class="text-center mb-12">
       <h1 class="text-3xl font-bold">
