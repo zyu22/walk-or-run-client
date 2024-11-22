@@ -1,11 +1,11 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import HomeView from '../views/HomeView.vue';
-import MainLayout from '../views/MainLayout.vue';
 import ChallengeView from '../views/ChallengeView.vue';
 import UserView from '../views/UserView.vue';
 import AdminView from '../views/AdminView.vue';
 import FollowView from '../views/FollowView.vue';
 import UploadView from '../views/UploadView.vue';
+import MainLayout from '../views/MainLayout.vue';
 
 import SettingChallenge from '@/components/admin/SettingChallenge.vue';
 import SettingScheduleChallenge from '@/components/admin/SettingChallenge.vue';
@@ -19,7 +19,7 @@ import upload from '@/components/upload/upload.vue';
 const routes = [
   {
     path: '/',
-    redirect: '/dashboard'
+    component: MainLayout
   },
   {
     path: '/dashboard',
@@ -50,6 +50,11 @@ const routes = [
         path: 'scheduleChallenge',
         name: 'adminScheduleChallenge',
         component: SettingScheduleChallenge
+      },
+      {
+        path: 'user/login',
+        name: 'adminUserLogin',
+        component: login
       }
       
     ]
@@ -105,38 +110,27 @@ const router = createRouter({
   routes
 });
 
-// 네비게이션 가드 추가
 router.beforeEach((to, from, next) => {
   const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
   
-  // 로그인 페이지로 가는 경우
-  if (to.path === '/login') {
-    if (isLoggedIn) {
-      // 이미 로그인된 경우 대시보드로
-      const userData = JSON.parse(localStorage.getItem('user') || '{}');
-      next(userData.role === 'ADMIN' ? '/admin' : '/dashboard');
-    } else {
-      // 로그인되지 않은 경우 로그인 페이지로
-      next();
-    }
-    return;
-  }
+  // 로그인이 필요한 페이지인지 확인
+  const requiresAuth = to.matched.some(record => record.meta.requiresAuth);
   
-  // 로그인이 필요한 페이지에 접근하는 경우
-  if (!isLoggedIn) {
+  if (!isLoggedIn && requiresAuth) {
     next('/login');
     return;
   }
 
-  // 관리자 페이지 접근 제한
-  if (to.path.startsWith('/admin')) {
+  // 관리자 권한이 필요한 페이지 체크
+  const requiresAdmin = to.matched.some(record => record.meta.requiresAdmin);
+  if (requiresAdmin) {
     const userData = JSON.parse(localStorage.getItem('user') || '{}');
     if (userData.role !== 'ADMIN') {
       next('/dashboard');
       return;
     }
   }
-  
+
   next();
 });
 

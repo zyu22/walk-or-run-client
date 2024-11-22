@@ -80,6 +80,8 @@ const handleSubmit = async () => {
 const mockLogin = async (email, password) => {
   await new Promise(resolve => setTimeout(resolve, 1000)); // 임시 딜레이
 
+  console.log(email);
+  console.log(password);
   // 테스트용 계정
   if (email === 'admin@test.com' && password === 'admin') {
     return {
