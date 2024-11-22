@@ -1,10 +1,6 @@
 // HomeView.vue
 <template>
-  <div class="flex">
-    <!-- SideBar -->
-    <SideBar />
-    
-    <div class="flex-1 p-8 mr-6 h-[calc(100vh-3rem)] bg-gray-50 rounded-2xl">
+    <div>
       <!-- 상단 헤더 영역 -->
       <div class="flex justify-between items-center mb-8">
         <!-- 좌측 타이틀 -->
@@ -61,7 +57,7 @@
         <BarChart title="Customer Map" :dateRange="{ startDate, endDate }" />
       </div>
     </div>
-  </div>
+  
 </template>
 
 <script setup>
