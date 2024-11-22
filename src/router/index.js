@@ -22,14 +22,6 @@ const routes = [
     component : ChallengeView
   },
   {
-    path: '/user',
-    name: 'user',
-    component: UserView,
-    children: [
-
-    ]
-  },
-  {
     path: '/admin',
     name: 'admin',
     component: AdminView,
@@ -40,7 +32,29 @@ const routes = [
       }
       
     ]
-  }
+  },
+  {
+      path: '/user',
+      name: 'user',
+      component: UserView,
+      children: [
+        {
+          path: 'info',  // /user/info로 접근
+          name: 'myInfo',
+          component: () => import('@/components/user/myInfo.vue')
+        },
+        {
+          path: 'password',  // /user/password로 접근
+          name: 'myPassword',
+          component: () => import('@/components/user/myPassword.vue')
+        },
+        {
+          path: 'goal',  // /user/goal로 접근
+          name: 'myGoal',
+          component: () => import('@/components/user/myGoal.vue')
+        }
+      ]
+    },
 ];
 
 const router = createRouter({
