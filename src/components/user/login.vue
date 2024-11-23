@@ -1,7 +1,7 @@
 <template>
-  <div class="flex items-center justify-center min-h-screen">
-    <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
-      <h2 class="text-2xl font-bold mb-6 text-center">로그인</h2>
+  <div class="flex min-h-screen items-center justify-center">
+    <div class="w-full max-w-md rounded-lg bg-white p-8 shadow-md">
+      <h2 class="mb-6 text-center text-2xl font-bold">로그인</h2>
       <form @submit.prevent="handleLogin" class="space-y-4">
         <div>
           <label class="block text-sm font-medium text-gray-700">이메일</label>
@@ -23,70 +23,62 @@
         </div>
         <button
           type="submit"
-          class="w-full bg-orange-500 text-white py-2 px-4 rounded-md hover:bg-orange-600 transition-colors"
+          class="w-full rounded-md bg-orange-500 px-4 py-2 text-white transition-colors hover:bg-orange-600"
           :disabled="isLoading"
         >
           {{ isLoading ? '로딩중...' : '로그인' }}
         </button>
-        <p v-if="error" class="text-red-500 text-sm text-center">{{ error }}</p>
+        <p v-if="error" class="text-center text-sm text-red-500">{{ error }}</p>
       </form>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
-import axios from 'axios';
-import { useUserStore } from '@/stores/user';
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+import api from '@/api/axios' // axios 대신 api 인스턴스 사용
+import { useUserStore } from '@/stores/user'
 
-const VITE_API_URL = import.meta.env.VITE_API_URL;
-const router = useRouter();
-const userEmail = ref('');
-const userPassword = ref('');
-const error = ref('');
-const isLoading = ref(false);
-const userStore = useUserStore();
-
+const router = useRouter()
+const userEmail = ref('')
+const userPassword = ref('')
+const error = ref('')
+const isLoading = ref(false)
+const userStore = useUserStore()
 
 const handleLogin = async () => {
+  isLoading.value = true
+  error.value = ''
+
   try {
-    const response = await axios.post(`${VITE_API_URL}/auth/login`, {
+    const response = await api.post('/auth/login', {
       userEmail: userEmail.value,
-      userPassword: userPassword.value
-    });
+      userPassword: userPassword.value,
+    })
 
     if (response.status === 200) {
-      const accessToken = response.data.access_token;
-      const refreshToken = response.data.refresh_token;
-      console.log(accessToken);
-      console.log(refreshToken);
-      saveAuthTokens(accessToken, refreshToken);
+      const accessToken = response.data.access_token
+      console.log(response.data)
+      const refreshToken = response.data.refresh_token
 
-      // token 값에 있는 userId, userRole, userEmail pinia로 저장
-      userStore.updateUserInfo(accessToken);
-      
-      console.log('Login successful');
-    } else if (response.status === 401) {
-      console.error('Login failed: Invalid username or password');
-    } else {
-      console.error(`Login failed: ${response.status} - ${response.statusText}`);
+      // localStorage에 토큰 저장
+      localStorage.setItem('accessToken', accessToken)
+      localStorage.setItem('refreshToken', refreshToken)
+
+      // Pinia store 업데이트
+      userStore.updateUserInfo(accessToken)
+
+      router.push('/dashboard')
     }
   } catch (error) {
     if (error.response) {
-      // 서버 응답 오류
-      console.error(`Login failed: ${error.response.status} - ${error.response.data.message}`);
+      error.value = error.response.data.message || '로그인에 실패했습니다.'
     } else {
-      // 네트워크 오류 또는 기타 오류
-      console.error('Login failed:', error);
+      error.value = '서버와의 연결에 문제가 있습니다.'
     }
+  } finally {
+    isLoading.value = false
   }
-};
-
-const saveAuthTokens = (accessToken, refreshToken) => {
-  // local에 token 저장
-  localStorage.setItem('accessToken', accessToken);
-  localStorage.setItem('refreshToken', refreshToken);
 }
-
 </script>
