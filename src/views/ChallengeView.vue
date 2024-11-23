@@ -1,92 +1,91 @@
 // views/ChallengeView.vue
 <template>
-      <!-- 헤더 -->
-      <div class="flex justify-between items-center mb-8">
-        <h1 class="text-2xl font-bold">Challenge</h1>
-        <div class="flex gap-2">
-          <button 
-            v-for="type in challengeTypes" 
-            :key="type"
-            @click="filterType = type"
-            class="px-4 py-2 rounded-lg transition-colors"
-            :class="filterType === type ? 'bg-[#ff6f3b] text-white' : 'bg-white text-gray-600 hover:bg-gray-100'"
-          >
-            {{ type }}
-          </button>
+  <!-- 헤더 -->
+  <div class="mb-8 flex items-center justify-between">
+    <h1 class="text-2xl font-bold">Challenge</h1>
+    <div class="flex gap-2">
+      <button
+        v-for="type in challengeTypes"
+        :key="type"
+        @click="filterType = type"
+        class="rounded-lg px-4 py-2 transition-colors"
+        :class="
+          filterType === type
+            ? 'bg-[#ff6f3b] text-white'
+            : 'bg-white text-gray-600 hover:bg-gray-100'
+        "
+      >
+        {{ type }}
+      </button>
+    </div>
+  </div>
+
+  <!-- 챌린지 카드 그리드 -->
+  <div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
+    <div
+      v-for="challenge in filteredChallenges"
+      :key="challenge.id"
+      @click="openChallengeModal(challenge)"
+      class="group cursor-pointer rounded-lg bg-white p-6 shadow-sm transition-all hover:shadow-md"
+    >
+      <div class="mb-4 flex items-start justify-between">
+        <span class="rounded-full px-3 py-1 text-sm" :class="getChallengeTypeColor(challenge.type)">
+          {{ challenge.type }}
+        </span>
+        <span class="text-sm text-gray-500">D-{{ challenge.dday }}</span>
+      </div>
+
+      <h3 class="mb-2 text-lg font-semibold group-hover:text-[#ff6f3b]">{{ challenge.title }}</h3>
+      <p class="mb-4 text-sm text-gray-600">{{ challenge.description }}</p>
+
+      <div class="space-y-2">
+        <div class="flex justify-between text-sm text-gray-500">
+          <span>참여율</span>
+          <span>{{ challenge.progress }}%</span>
+        </div>
+        <div class="h-2 w-full rounded-full bg-gray-100">
+          <div
+            class="h-2 rounded-full bg-[#ff6f3b]"
+            :style="{ width: `${challenge.progress}%` }"
+          ></div>
+        </div>
+        <div class="text-right text-sm text-gray-500">
+          {{ challenge.participants.toLocaleString() }}명 참여 중
         </div>
       </div>
+    </div>
+  </div>
 
-      <!-- 챌린지 카드 그리드 -->
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div 
-          v-for="challenge in filteredChallenges" 
-          :key="challenge.id"
-          @click="openChallengeModal(challenge)"
-          class="bg-white rounded-lg shadow-sm hover:shadow-md transition-all cursor-pointer p-6 group"
-        >
-          <div class="flex justify-between items-start mb-4">
-            <span 
-              class="px-3 py-1 rounded-full text-sm"
-              :class="getChallengeTypeColor(challenge.type)"
-            >
-              {{ challenge.type }}
-            </span>
-            <span class="text-sm text-gray-500">D-{{ challenge.dday }}</span>
-          </div>
+  <!-- 페이지네이션 -->
+  <div class="mt-8 flex justify-center space-x-2">
+    <button
+      v-for="page in totalPages"
+      :key="page"
+      @click="currentPage = page"
+      class="rounded-lg px-4 py-2"
+      :class="currentPage === page ? 'bg-[#ff6f3b] text-white' : 'bg-white text-gray-600'"
+    >
+      {{ page }}
+    </button>
+  </div>
 
-          <h3 class="text-lg font-semibold mb-2 group-hover:text-[#ff6f3b]">{{ challenge.title }}</h3>
-          <p class="text-sm text-gray-600 mb-4">{{ challenge.description }}</p>
-
-          <div class="space-y-2">
-            <div class="flex justify-between text-sm text-gray-500">
-              <span>참여율</span>
-              <span>{{ challenge.progress }}%</span>
-            </div>
-            <div class="w-full bg-gray-100 rounded-full h-2">
-              <div 
-                class="h-2 rounded-full bg-[#ff6f3b]"
-                :style="{ width: `${challenge.progress}%` }"
-              ></div>
-            </div>
-            <div class="text-sm text-gray-500 text-right">
-              {{ challenge.participants.toLocaleString() }}명 참여 중
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- 페이지네이션 -->
-      <div class="flex justify-center mt-8 space-x-2">
-        <button 
-          v-for="page in totalPages" 
-          :key="page"
-          @click="currentPage = page"
-          class="px-4 py-2 rounded-lg"
-          :class="currentPage === page ? 'bg-[#ff6f3b] text-white' : 'bg-white text-gray-600'"
-        >
-          {{ page }}
-        </button>
-      </div>
-
-      <!-- 챌린지 상세 모달 -->
-      <ChallengeDetailModal 
-        v-if="selectedChallenge" 
-        :challenge="selectedChallenge"
-        @close="closeModal"
-      />
+  <!-- 챌린지 상세 모달 -->
+  <ChallengeDetailModal
+    v-if="selectedChallenge"
+    :challenge="selectedChallenge"
+    @close="closeModal"
+  />
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
-import SideBar from '../components/SideBar.vue';
-import ChallengeDetailModal from '../components/dashboard/ChallengeDetailModal.vue';
+import { ref, computed } from 'vue'
+import SideBar from '../components/Sidebar.vue'
+import ChallengeDetailModal from '../components/dashboard/ChallengeDetailModal.vue'
 
-const challengeTypes = ['All', 'Daily', 'Weekly', 'Monthly', 'Event'];
-const filterType = ref('All');
-const currentPage = ref(1);
-const selectedChallenge = ref(null);
-
-
+const challengeTypes = ['All', 'Daily', 'Weekly', 'Monthly', 'Event']
+const filterType = ref('All')
+const currentPage = ref(1)
+const selectedChallenge = ref(null)
 
 // 샘플 데이터 추가
 const challenges = ref([
@@ -98,7 +97,7 @@ const challenges = ref([
     dday: 1,
     progress: 85,
     participants: 2543,
-    period: '2024.03.21 - 2024.03.21'
+    period: '2024.03.21 - 2024.03.21',
   },
   {
     id: 2,
@@ -108,7 +107,7 @@ const challenges = ref([
     dday: 5,
     progress: 45,
     participants: 1876,
-    period: '2024.03.18 - 2024.03.24'
+    period: '2024.03.18 - 2024.03.24',
   },
   {
     id: 3,
@@ -118,7 +117,7 @@ const challenges = ref([
     dday: 10,
     progress: 62,
     participants: 3241,
-    period: '2024.03.01 - 2024.03.31'
+    period: '2024.03.01 - 2024.03.31',
   },
   {
     id: 4,
@@ -128,7 +127,7 @@ const challenges = ref([
     dday: 7,
     progress: 28,
     participants: 982,
-    period: '2024.03.20 - 2024.04.10'
+    period: '2024.03.20 - 2024.04.10',
   },
   {
     id: 5,
@@ -138,7 +137,7 @@ const challenges = ref([
     dday: 1,
     progress: 92,
     participants: 1567,
-    period: '2024.03.21 - 2024.03.21'
+    period: '2024.03.21 - 2024.03.21',
   },
   {
     id: 6,
@@ -148,7 +147,7 @@ const challenges = ref([
     dday: 4,
     progress: 73,
     participants: 2198,
-    period: '2024.03.18 - 2024.03.24'
+    period: '2024.03.18 - 2024.03.24',
   },
   {
     id: 7,
@@ -158,7 +157,7 @@ const challenges = ref([
     dday: 15,
     progress: 55,
     participants: 876,
-    period: '2024.03.01 - 2024.03.31'
+    period: '2024.03.01 - 2024.03.31',
   },
   {
     id: 8,
@@ -168,34 +167,34 @@ const challenges = ref([
     dday: 3,
     progress: 68,
     participants: 1432,
-    period: '2024.03.15 - 2024.03.25'
-  }
-]);
+    period: '2024.03.15 - 2024.03.25',
+  },
+])
 
 const filteredChallenges = computed(() => {
   if (filterType.value === 'All') {
-    return challenges.value;  // .value 추가
+    return challenges.value // .value 추가
   }
-  return challenges.value.filter(challenge => challenge.type === filterType.value);  // .value 추가
-});
+  return challenges.value.filter((challenge) => challenge.type === filterType.value) // .value 추가
+})
 
 const getChallengeTypeColor = (type) => {
   const colors = {
-    'Daily': 'bg-orange-100 text-orange-600',
-    'Weekly': 'bg-green-100 text-green-600',
-    'Monthly': 'bg-blue-100 text-blue-600',
-    'Event': 'bg-purple-100 text-purple-600'
-  };
-  return colors[type] || 'bg-gray-100 text-gray-600';
-};
+    Daily: 'bg-orange-100 text-orange-600',
+    Weekly: 'bg-green-100 text-green-600',
+    Monthly: 'bg-blue-100 text-blue-600',
+    Event: 'bg-purple-100 text-purple-600',
+  }
+  return colors[type] || 'bg-gray-100 text-gray-600'
+}
 
-const totalPages = computed(() => Math.ceil(filteredChallenges.value.length / 8));
+const totalPages = computed(() => Math.ceil(filteredChallenges.value.length / 8))
 
 const openChallengeModal = (challenge) => {
-  selectedChallenge.value = challenge;
-};
+  selectedChallenge.value = challenge
+}
 
 const closeModal = () => {
-  selectedChallenge.value = null;
-};
+  selectedChallenge.value = null
+}
 </script>
