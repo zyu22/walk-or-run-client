@@ -1,4 +1,3 @@
-// views/ChallengeView.vue
 <template>
   <!-- 헤더 -->
   <div class="mb-8 flex items-center justify-between">
@@ -79,8 +78,7 @@
 
 <script setup>
 import { ref, computed } from 'vue'
-import SideBar from '../components/Sidebar.vue'
-import ChallengeDetailModal from '../components/dashboard/ChallengeDetailModal.vue'
+import ChallengeDetailModal from '@/components/user/challenge/challengeDetailModal.vue'
 
 const challengeTypes = ['All', 'Daily', 'Weekly', 'Monthly', 'Event']
 const filterType = ref('All')

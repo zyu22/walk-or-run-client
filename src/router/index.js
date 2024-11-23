@@ -1,44 +1,105 @@
-import { createRouter, createWebHistory } from 'vue-router';
-import HomeView from '../views/HomeView.vue';
-import ChallengeView from '../views/ChallengeView.vue';
-import UserView from '../views/UserView.vue';
-import AdminView from '../views/AdminView.vue';
-import FollowView from '../views/FollowView.vue';
-import UploadView from '../views/UploadView.vue';
-import MainLayout from '../views/MainLayout.vue';
+import { createRouter, createWebHistory } from 'vue-router'
+import { useUserStore } from '@/stores/user'
+import UserView from '../views/UserView.vue'
+import AdminView from '../views/AdminView.vue'
+import UploadView from '../views/UploadView.vue'
 
-import SettingChallenge from '@/components/admin/SettingChallenge.vue';
-import SettingScheduleChallenge from '@/components/admin/SettingChallenge.vue';
-import login from '@/components/user/login.vue';
-import register from '@/components/user/register.vue';
-import myInfo from '@/components/user/myInfo.vue';
-import myGoal from '@/components/user/myGoal.vue';
-import myPassword from '@/components/user/myPassword.vue';
-import myGoalForm from '@/components/user/myGoalForm.vue';
-import upload from '@/components/upload/upload.vue';
-import FindEmail from '@/components/user/findEmail.vue';
-import FindPassword from '@/components/user/findPassword.vue';
-import ResetPassword from '@/components/user/resetPassword.vue';
+import loginView from '@/components/authentication/login.vue'
+import register from '@/components/authentication/register.vue'
+import myInfo from '@/components/user/info/myInfo.vue'
+import myPassword from '@/components/user/info/myPassword.vue'
+import findEmail from '@/components/authentication/findEmail.vue'
+import findPassword from '@/components/authentication/findPassword.vue'
+import resetPassword from '@/components/authentication/resetPassword.vue'
+import userFollow from '@/components/user/follow/follow.vue'
+
+import userChallenge from '@/components/user/challenge/challenge.vue'
+import userDetailChallenge from '@/components/user/challenge/challengeDetailModal.vue'
+
+import myGoal from '@/components/user/mygoal/myGoal.vue'
+
+import settingChallenge from '@/components/admin/challenge/settingChallenge.vue'
+import settingScheduleChallenge from '@/components/admin/challenge/settingChallenge.vue'
+import adminDashboard from '@/components/admin/dashboard/adminDashboard.vue'
+
+import upload from '@/components/user/upload/upload.vue'
+import AuthenticationView from '@/views/AuthenticationView.vue'
+import userDashboard from '@/components/user/dashboard/userDashboard.vue'
 
 const routes = [
   {
     path: '/',
-    component: MainLayout
+    name: 'auth',
+    component: AuthenticationView,
+    children: [
+      {
+        path: 'login',
+        name: 'login',
+        component: loginView,
+      },
+      {
+        path: 'register',
+        name: 'register',
+        component: register,
+      },
+      {
+        path: 'findEmail',
+        name: 'findEmail',
+        component: findEmail,
+      },
+      {
+        path: 'findPassword',
+        name: 'findPassword',
+        component: findPassword,
+      },
+      {
+        path: 'resetPassword',
+        name: 'resetPassword',
+        component: resetPassword,
+      },
+    ],
   },
   {
-    path: '/dashboard',
-    name: 'dashboard',
-    component: HomeView
-  },
-  {
-    path: '/challenge',
-    name: 'challenge',
-    component : ChallengeView
-  },
-  {
-    path: '/follow',
-    name: 'follow',
-    component : FollowView
+    path: '/user',
+    name: 'user',
+    component: UserView,
+    children: [
+      {
+        path: 'info',
+        name: 'myInfo',
+        component: myInfo,
+      },
+      {
+        path: 'password',
+        name: 'myPassword',
+        component: myPassword,
+      },
+      {
+        path: 'goal',
+        name: 'myGoal',
+        component: myGoal,
+      },
+      {
+        path: 'challenge',
+        name: 'userChallenge',
+        component: userChallenge,
+      },
+      {
+        path: 'detailChallenge',
+        name: 'userDetailChallenge',
+        component: userDetailChallenge,
+      },
+      {
+        path: 'dashboard',
+        name: 'userDashboard',
+        component: userDashboard,
+      },
+      {
+        path: 'follow',
+        name: 'userFollow',
+        component: userFollow,
+      },
+    ],
   },
   {
     path: '/admin',
@@ -46,116 +107,65 @@ const routes = [
     component: AdminView,
     children: [
       {
-        path: 'adminChallenge',
+        path: '',
+        name: 'adminDashboard',
+        component: adminDashboard,
+      },
+      {
+        path: 'dashboard',
+        name: 'adminDashboard',
+        component: adminDashboard,
+      },
+      {
+        path: 'challenge',
         name: 'adminChallenge',
-        component: SettingChallenge
+        component: settingChallenge,
       },
       {
         path: 'scheduleChallenge',
         name: 'adminScheduleChallenge',
-        component: SettingScheduleChallenge
+        component: settingScheduleChallenge,
       },
-      {
-        path: 'user/login',
-        name: 'adminUserLogin',
-        component: login
-      }
-      
-    ]
+    ],
   },
   {
-      path: '/user',
-      name: 'user',
-      component: UserView,
-      children: [
-        {
-          path: 'login',  // /user/info로 접근
-          name: 'login',
-          component: login
-        },
-        {
-          path: 'register',  // /user/info로 접근
-          name: 'register',
-          component: register
-        },
-        {
-          path: 'findEmail',  // /user/info로 접근
-          name: 'findEmail',
-          component: FindEmail
-        },
-        {
-          path: 'findPassword',  // /user/info로 접근
-          name: 'findPassword',
-          component: FindPassword
-        },
-        {
-          path: 'resetPassword',  // /user/info로 접근
-          name: 'resetPassword',
-          component: ResetPassword
-        },
-        {
-          path: 'info',  // /user/info로 접근
-          name: 'myInfo',
-          component: myInfo
-        },
-        {
-          path: 'password',  // /user/password로 접근
-          name: 'myPassword',
-          component: myPassword
-        },
-        {
-          path: 'goal',  // /user/goal로 접근
-          name: 'myGoal',
-          component: myGoal
-        },
-        {
-          path: 'goal/form',
-          name: 'mygoalForm',
-          component: myGoalForm
-        },
-      ]
-    },
-    {
-      path: '/upload',
-      name: 'upload',
-      component : UploadView,
-      children: [
-        {
-          path: '', // 기본 경로
-          name: 'uploadDefault',
-          component: upload
-        },
-      ]
-    },
-];
+    path: '/upload',
+    name: 'upload',
+    component: UploadView,
+    children: [
+      {
+        path: '', // 기본 경로
+        name: 'uploadDefault',
+        component: upload,
+      },
+    ],
+  },
+]
 
 const router = createRouter({
   history: createWebHistory(),
-  routes
-});
+  routes,
+})
 
 router.beforeEach((to, from, next) => {
-  const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
-  
-  // 로그인이 필요한 페이지인지 확인
-  const requiresAuth = to.matched.some(record => record.meta.requiresAuth);
-  
-  if (!isLoggedIn && requiresAuth) {
-    next('/login');
-    return;
+  const accessToken = localStorage.getItem('accessToken')
+  const userStore = useUserStore() // store import 필요
+
+  // 로그인이 필요한 페이지 접근 제어
+  if (!accessToken && to.name !== 'login') {
+    next({ name: 'login' })
+    return
   }
 
-  // 관리자 권한이 필요한 페이지 체크
-  const requiresAdmin = to.matched.some(record => record.meta.requiresAdmin);
-  if (requiresAdmin) {
-    const userData = JSON.parse(localStorage.getItem('user') || '{}');
-    if (userData.role !== 'ADMIN') {
-      next('/dashboard');
-      return;
+  // admin 경로 접근 제어
+  if (to.path.startsWith('/admin')) {
+    if (userStore.userRole !== 'ADMIN') {
+      next({ name: 'userDashboard' })
+      return
     }
   }
 
-  next();
-});
+  next()
+})
 
-export default router;
+export default router

@@ -10,34 +10,34 @@
             src="@/assets/logo.png"
             alt="WalkOrRun"
             class="h-40 w-auto cursor-pointer"
-            @click="router.push('/dashboard')"
+            @click="router.push('/user/dashboard')"
           />
         </div>
 
         <!-- Navigation -->
         <nav class="flex-1 px-4">
           <router-link
-            to="/dashboard"
+            :to="{ name: 'userDashboard' }"
             class="mb-2 flex items-center rounded-lg px-4 py-3 text-gray-600 transition-colors hover:bg-white"
-            :class="{ 'bg-orange-50 font-medium text-orange-500': isCurrentRoute('dashboard') }"
+            :class="{ 'bg-orange-50 font-medium text-orange-500': route.name === 'userDashboard' }"
           >
             <span class="mr-3">📊</span>
             Dashboard
           </router-link>
 
           <router-link
-            to="/challenge"
+            :to="{ name: 'userChallenge' }"
             class="mb-2 flex items-center rounded-lg px-4 py-3 text-gray-600 transition-colors hover:bg-white"
-            :class="{ 'bg-orange-50 font-medium text-orange-500': isCurrentRoute('challenge') }"
+            :class="{ 'bg-orange-50 font-medium text-orange-500': route.name === 'userChallenge' }"
           >
             <span class="mr-3">🎯</span>
             Challenge
           </router-link>
 
           <router-link
-            to="/follow"
+            :to="{ name: 'userFollow' }"
             class="mb-2 flex items-center rounded-lg px-4 py-3 text-gray-600 transition-colors hover:bg-white"
-            :class="{ 'bg-orange-50 font-medium text-orange-500': isCurrentRoute('follow') }"
+            :class="{ 'bg-orange-50 font-medium text-orange-500': route.name === 'userFollow' }"
           >
             <span class="mr-3">👥</span>
             Follow
@@ -65,27 +65,27 @@
             <!-- Submenu -->
             <div v-show="isMyPageOpen" class="ml-4 mt-1 space-y-1">
               <router-link
-                to="/user/info"
+                :to="{ name: 'myInfo' }"
                 class="flex items-center rounded-lg px-4 py-2 text-sm text-gray-600 transition-colors hover:bg-white"
-                :class="{ 'bg-orange-50 font-medium text-orange-500': isCurrentRoute('info') }"
+                :class="{ 'bg-orange-50 font-medium text-orange-500': route.name === 'myInfo' }"
               >
                 <span class="mr-3">👤</span>
                 내 정보 관리
               </router-link>
 
               <router-link
-                to="/user/password"
+                :to="{ name: 'myPassword' }"
                 class="flex items-center rounded-lg px-4 py-2 text-sm text-gray-600 transition-colors hover:bg-white"
-                :class="{ 'bg-orange-50 text-orange-500': isCurrentRoute('password') }"
+                :class="{ 'bg-orange-50 font-medium text-orange-500': route.name === 'myPassword' }"
               >
                 <span class="mr-3">🔒</span>
                 내 비밀번호 관리
               </router-link>
 
               <router-link
-                to="/user/goal"
+                :to="{ name: 'myGoal' }"
                 class="flex items-center rounded-lg px-4 py-2 text-sm text-gray-600 transition-colors hover:bg-white"
-                :class="{ 'bg-orange-50 font-medium text-orange-500': isCurrentRoute('goal') }"
+                :class="{ 'bg-orange-50 font-medium text-orange-500': route.name === 'myGoal' }"
               >
                 <span class="mr-3">🎯</span>
                 내 목표 관리
@@ -97,9 +97,9 @@
         <!-- Bottom Items -->
         <div class="p-4">
           <router-link
-            to="/upload"
+            :to="{ name: 'uploadDefault' }"
             class="mb-2 flex items-center rounded-lg px-4 py-3 text-gray-600 transition-colors hover:bg-white"
-            :class="{ 'bg-orange-50 font-medium text-orange-500': isCurrentRoute('upload') }"
+            :class="{ 'bg-orange-50 font-medium text-orange-500': route.name === 'uploadDefault' }"
           >
             <span class="mr-3">📤</span>
             Upload
@@ -128,18 +128,15 @@ const isMyPageOpen = ref(false)
 const emit = defineEmits(['logout'])
 
 const isMyPageActive = computed(() => {
-  return route.path.includes('/user')
+  return (
+    route.path === '/user/info' || route.path === '/user/password' || route.path === '/user/goal'
+  )
 })
-
-const isCurrentRoute = (path) => {
-  return route.path.includes(path)
-}
 
 const toggleMyPage = () => {
   isMyPageOpen.value = !isMyPageOpen.value
 }
 
-// 이벤트만 부모(App.vue)한테 전송
 const handleLogout = () => {
   emit('logout')
 }
