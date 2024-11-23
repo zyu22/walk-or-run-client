@@ -72,6 +72,7 @@
 import { ref } from 'vue'
 import axios from 'axios'
 import { useUserStore } from '@/stores/user'
+import api from '@/api/axios'
 
 const userStore = useUserStore()
 const selectedFile = ref(null)
@@ -113,15 +114,15 @@ const handleCsvUpload = async (event) => {
   })
 
   try {
-    const response = await axios({
-      method: 'POST',
-      url: `http://13.125.131.153:8080/api/user/${userStore.userId}/record/upload`,
-      data: formData,
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'multipart/form-data'
+    const response = await api.post(
+      `/user/${userStore.userId}/record/upload`,
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
       }
-    })
+    )
     
     console.log("업로드 응답:", response)
     
