@@ -1,5 +1,4 @@
 import { fileURLToPath, URL } from 'node:url'
-
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import vueDevTools from 'vite-plugin-vue-devtools'
@@ -15,4 +14,16 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url))
     },
   },
+  server: {
+    proxy: {
+      '/api': {
+        target: 'http://13.125.131.153:8080',
+        changeOrigin: true,
+        secure: false,
+        ws: true,
+
+        rewrite: (path) => path.replace(/^\/api/, '/api')
+      }
+    }
+  }
 })
