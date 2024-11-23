@@ -52,7 +52,7 @@ const handleLogin = async () => {
   error.value = ''
 
   try {
-    const response = await api.post('/auth/login', {
+    const response = await api.post('auth/login', {
       userEmail: userEmail.value,
       userPassword: userPassword.value,
     })
