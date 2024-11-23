@@ -115,7 +115,7 @@ const handleCsvUpload = async (event) => {
 
   try {
     const response = await api.post(
-      `/user/${userStore.userId}/record/upload`,
+      `/user/${userStore.userId}/record`,
       formData,
       {
         headers: {

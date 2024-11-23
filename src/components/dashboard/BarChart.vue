@@ -1,85 +1,125 @@
 <template>
-  <div class="bg-white rounded-lg shadow p-6">
-    <div class="flex justify-between items-center mb-4">
-      <h3 class="text-lg font-semibold text-gray-700">{{ title }}</h3>
-      <div class="flex gap-2">
-        <button class="text-sm text-gray-500 hover:text-gray-700">Week</button>
-        <button class="text-sm text-gray-500 hover:text-gray-700">Month</button>
-        <button class="text-sm text-gray-500 hover:text-gray-700">Year</button>
-      </div>
-    </div>
-    
-    <div class="h-64">
-      <!-- Bar Chart will be rendered here -->
-      <Bar
-        v-if="chartData"
-        :data="chartData"
-        :options="chartOptions"
-      />
-    </div>
+  <div class="bar-chart">
+    <h3>{{ title }}</h3>
+    <div v-if="loading">Loading...</div>
+    <div v-else-if="error">{{ error }}</div>
+    <canvas v-else ref="chartRef"></canvas>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
-import { Bar } from 'vue-chartjs';
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend
-} from 'chart.js';
+import { ref, onMounted, watch } from 'vue';
+import Chart from 'chart.js/auto';
+import api from '@/api/axios';
 
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend
-);
-
+// Props
 const props = defineProps({
   title: {
     type: String,
-    default: '나는 BarChart다'
-  }
-});
-
-const chartData = ref({
-  labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-  datasets: [
-    {
-      label: 'Customer Activity',
-      data: [65, 59, 80, 81, 56, 55, 40],
-      backgroundColor: [
-        '#FF6384',
-        '#36A2EB',
-        '#FFCE56',
-        '#4BC0C0',
-        '#9966FF',
-        '#FF9F40',
-        '#7FBA00'
-      ]
-    }
-  ]
-});
-
-const chartOptions = ref({
-  responsive: true,
-  maintainAspectRatio: false,
-  plugins: {
-    legend: {
-      display: false
-    }
+    required: true
   },
-  scales: {
-    y: {
-      beginAtZero: true
-    }
+  apiEndpoint: {
+    type: String,
+    required: true
   }
+});
+
+// Refs
+const chartRef = ref(null);
+const chartInstance = ref(null);
+const loading = ref(false);
+const error = ref(null);
+const startDate = ref(new Date().toISOString().split('T')[0]);
+const endDate = ref(new Date().toISOString().split('T')[0]);
+
+// API 호출 함수
+const fetchData = async () => {
+  loading.value = true;
+  error.value = null;
+
+  try {
+    const accessToken = localStorage.getItem('accessToken')
+    const response = await api.get(
+      `/${props.apiEndpoint}`, {
+        params: {
+          startTime: startDate.value,
+          endTime: endDate.value
+        },
+        headers: {
+          'Authorization': `Bearer ${accessToken}`
+        }
+      }
+    );
+
+    if (response.status !== 200) {
+      throw new Error('Failed to fetch data');
+    }
+
+    const data = response.data;
+    updateChartData(data);
+  } catch (err) {
+    if (err.response && err.response.status === 401) {
+      error.value = '인증에 실패했습니다. 다시 로그인해주세요.';
+      // 토큰 갱신 로직 추가 또는 로그인 페이지로 리다이렉트
+    } else {
+      error.value = '데이터를 불러오는데 실패했습니다';
+    }
+    console.error('Error fetching data:', err);
+  } finally {
+    loading.value = false;
+  }
+};
+
+// 차트 데이터 업데이트 함수
+const updateChartData = (data) => {
+  console.log('Received data:', data); // 받은 데이터 로깅
+
+  if (chartInstance.value) {
+    chartInstance.value.destroy();
+  }
+
+  const ctx = chartRef.value.getContext('2d');
+  chartInstance.value = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: data.map(item => new Date(item.startTime).toLocaleDateString()),
+      datasets: [{
+        label: props.title,
+        data: data.map(item => {
+          console.log('Data item:', item); // 각 데이터 항목 로깅
+          return item.value; // 또는 적절한 필드명
+        }),
+        backgroundColor: 'rgba(75, 192, 192, 0.6)',
+        borderColor: 'rgba(75, 192, 192, 1)',
+        borderWidth: 1
+      }]
+    },
+    options: {
+      responsive: true,
+      scales: {
+        y: {
+          beginAtZero: true
+        }
+      }
+    }
+  });
+};
+
+// 컴포넌트 마운트 시 데이터 fetch
+onMounted(() => {
+  fetchData();
+});
+
+// 날짜 변경 시 데이터 re-fetch
+watch([startDate, endDate], () => {
+  fetchData();
 });
 </script>
+
+<style scoped>
+.bar-chart {
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+}
+</style>
