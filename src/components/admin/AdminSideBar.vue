@@ -1,4 +1,3 @@
-// components/admin/Sidebar.vue
 <template>
   <div class="flex h-screen bg-white">
     <!-- Left Padding for Sidebar -->
@@ -20,18 +19,20 @@
           <!-- Navigation -->
           <nav class="flex-1 px-4">
             <router-link
-              to="/admin"
+              :to="{ name: 'adminDashboard' }"
               class="mb-2 flex items-center rounded-lg px-4 py-3 text-gray-600 transition-colors hover:bg-white"
-              :class="{ 'bg-orange-50 font-medium text-orange-500': route.path === '/admin' }"
+              :class="{
+                'bg-orange-50 font-medium text-orange-500': route.name === 'adminDashboard',
+              }"
             >
               <span class="mr-3">📊</span>
               Dashboard
             </router-link>
 
             <router-link
-              to="/admin/user"
+              :to="{ name: 'adminUser' }"
               class="mb-2 flex items-center rounded-lg px-4 py-3 text-gray-600 transition-colors hover:bg-white"
-              :class="{ 'bg-orange-50 font-medium text-orange-500': route.path === '/admin/user' }"
+              :class="{ 'bg-orange-50 font-medium text-orange-500': route.name === 'adminUser' }"
             >
               <span class="mr-3">⚙️</span>
               사용자 관리
@@ -87,9 +88,11 @@
           <!-- Bottom Items -->
           <div class="p-4">
             <router-link
-              to="/upload"
+              :to="{ name: 'uploadDefault' }"
               class="mb-2 flex items-center rounded-lg px-4 py-3 text-gray-600 transition-colors hover:bg-white"
-              :class="{ 'bg-orange-50 font-medium text-orange-500': route.path === '/upload' }"
+              :class="{
+                'bg-orange-50 font-medium text-orange-500': route.name === 'uploadDefault',
+              }"
             >
               <span class="mr-3">📤</span>
               Upload
@@ -118,23 +121,20 @@
 import { ref, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 
-const emit = defineEmits(['logout']) // emit 정의 추가
+const emit = defineEmits(['logout'])
 
 const router = useRouter()
 const route = useRoute()
 const isChallengeOpen = ref(false)
 
-// Challenge 메뉴가 활성화되어야 하는지 확인
 const isChallengeMenuActive = computed(() => {
   return route.name === 'adminChallenge' || route.name === 'adminScheduleChallenge'
 })
 
-// 챌린지 메뉴 토글
 const toggleChallenge = () => {
   isChallengeOpen.value = !isChallengeOpen.value
 }
 
-// 부모한테 이벤트만 전달
 const handleLogout = () => {
   emit('logout')
 }
