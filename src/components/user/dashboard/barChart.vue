@@ -109,10 +109,25 @@ const processData = (records) => {
       acc[timeKey] = []
     }
 
-    // 데이터 타입에 따라 값 추출
-    const value = record.stepCount ?? record.calorie ?? 0
-    acc[timeKey].push(value)
+    // 데이터 타입별로 적절한 필드 선택
+    let value = 0
+    if (record.stepCount !== undefined) {
+      value = record.stepCount
+    } else if (record.totalCalorie !== undefined) {
+      value = record.totalCalorie
+    } else if (record.distance !== undefined) {
+      value = record.distance
+    } else if (record.meanHeartRate !== undefined) {
+      value = record.meanHeartRate
+    } else if (record.meanSpeed !== undefined) {
+      value = record.meanSpeed
+    } else if (record.cadence !== undefined) {
+      value = record.cadence
+    } else if (record.totalMinutes !== undefined) {
+      value = record.totalMinutes
+    }
 
+    acc[timeKey].push(value)
     return acc
   }, {})
 

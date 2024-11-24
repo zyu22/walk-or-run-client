@@ -26,6 +26,38 @@
       </button>
     </div>
     
+    <!-- 각 데이터 타입별 MetricCard -->
+    <div class="grid grid-cols-2 gap-6">
+      <MetricCard 
+      key="exerciseTime"
+      :records="recordsMap.exerciseTime"
+      title="운동시간"
+    />
+    </div>
+    <div class="grid grid-cols-2 gap-6">
+      <MetricCard 
+      key="distance"
+      :records="recordsMap.distance"
+      title="이동거리"
+    />
+    </div>
+    <div class="grid grid-cols-2 gap-6">
+      <MetricCard 
+      key="cadence"
+      :records="recordsMap.cadence"
+      title="케이던스"
+    />
+    </div>
+///////////////////////////////////////////////여기 수정해야함
+
+    <!-- 각 데이터 타입별 LineChart -->
+    <div class="grid grid-cols-2 gap-6">
+      <LineChart 
+      key="heartRate"
+      :records="recordsMap.heartRate"
+      title="심박수"
+    />
+    </div>
     <!-- 각 데이터 타입별 BarChart -->
     <div class="grid grid-cols-2 gap-6">
       <BarChart 
@@ -50,6 +82,8 @@ import { useUserStore } from '@/stores/user'
 import api from '@/api/axios'
 import DateRangePicker from '@/components/user/dashboard/dateRangePicker.vue'
 import BarChart from '@/components/user/dashboard/barChart.vue'
+import LineChart from '@/components/user/dashboard/lineChart.vue'
+import MetricCard from '@/components/user/dashboard/metricCard.vue'
 
 const userStore = useUserStore()
 const loading = ref(false)
@@ -61,8 +95,8 @@ const endDate = ref(new Date().toISOString().split('T')[0])
 const dataTypes = [
   { key: 'step', label: '걸음 수', endpoint: 'record/step' },
   { key: 'speed', label: '속도', endpoint: 'record/speed' },
-  { key: 'heartRate', label: '심박수', endpoint: 'record/heart-rate' },
-  { key: 'exerciseTime', label: '운동 시간', endpoint: 'record/exercise-time' },
+  { key: 'heartRate', label: '심박수', endpoint: 'record/heartRate' },
+  { key: 'exerciseTime', label: '운동 시간', endpoint: 'record/exerciseTime' },
   { key: 'distance', label: '거리', endpoint: 'record/distance' },
   { key: 'calorie', label: '칼로리', endpoint: 'record/calorie' },
   { key: 'cadence', label: '케이던스', endpoint: 'record/cadence' }
@@ -94,10 +128,12 @@ const fetchData = async (dataType) => {
       }
     })
     
-    recordsMap.value[dataType.key] = response.data
-    console.log(`Fetched ${dataType.label} data:`, response.data)
+    // 응답 데이터가 배열인지 확인하고 초기화
+    recordsMap.value[dataType.key] = Array.isArray(response.data) ? response.data : [];
     
-    if (!response.data.length) {
+    console.log(`Fetched ${dataType.label} data:`, recordsMap.value[dataType.key])
+    
+    if (!recordsMap.value[dataType.key].length) {
       console.log(`No ${dataType.label} data available for selected period`)
     }
   } catch (err) {
@@ -105,6 +141,7 @@ const fetchData = async (dataType) => {
     error.value = `${dataType.label} 데이터 로딩 실패: ${
       err.response?.status === 401 ? '인증 오류' : err.message
     }`
+    recordsMap.value[dataType.key] = [] 
   }
 }
 
