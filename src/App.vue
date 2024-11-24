@@ -4,11 +4,11 @@
     <Login v-if="!isLoggedIn" />
 
     <!-- 로그인한 경우: 역할에 따른 레이아웃 -->
-    <div v-else class="mt-6 flex">
+    <div v-else class="mt-6 flex h-[calc(100vh-3rem)]">
       <!-- ADMIN인 경우 -->
       <template v-if="isAdmin">
         <AdminSidebar @logout="handleLogout" />
-        <div class="mr-6 h-[calc(100vh-3rem)] flex-1 rounded-2xl bg-gray-50 p-8">
+        <div class="mr-6 flex-1 rounded-2xl bg-gray-50 p-8 overflow-y-auto">
           <RouterView />
         </div>
       </template>
@@ -16,7 +16,7 @@
       <!-- USER인 경우 -->
       <template v-else>
         <Sidebar @logout="handleLogout" />
-        <div class="mr-6 h-[calc(100vh-3rem)] flex-1 rounded-2xl bg-gray-50 p-8">
+        <div class="mr-6 flex-1 rounded-2xl bg-gray-50 p-8 overflow-y-auto">
           <RouterView />
         </div>
       </template>
@@ -24,6 +24,7 @@
     <Footer class="pb-8"></Footer>
   </div>
 </template>
+
 
 <script setup>
 import { computed, onMounted } from 'vue'
