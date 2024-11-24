@@ -10,30 +10,30 @@ const api = axios.create({
 
 // 요청 인터셉터
 api.interceptors.request.use(
-  config => {
+  (config) => {
     const token = localStorage.getItem('accessToken')
     if (token) {
       config.headers['Authorization'] = `Bearer ${token}`
     }
     return config
   },
-  error => {
+  (error) => {
     console.error('API 요청 에러:', error)
     return Promise.reject(error)
-  }
+  },
 )
 
 // 응답 인터셉터
 api.interceptors.response.use(
-  response => response,
-  error => {
+  (response) => response,
+  (error) => {
     console.error('API 응답 에러:', {
       status: error.response?.status,
       data: error.response?.data,
-      message: error.message
+      message: error.message,
     })
     return Promise.reject(error)
-  }
+  },
 )
 
 export default api

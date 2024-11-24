@@ -101,7 +101,8 @@ const fetchChallenges = async () => {
   isLoading.value = true
   error.value = null
   try {
-    const response = await api.get('/challenge') // API 엔드포인트에 맞게 조정하세요
+    const response = await api.get('/challenge')
+    console.log(response)
     challenges.value = response.data
   } catch (err) {
     console.error('챌린지 데이터를 불러오는 데 실패했습니다:', err)

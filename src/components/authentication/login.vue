@@ -66,7 +66,7 @@
 
       <!-- 회원가입 링크 -->
       <div class="mt-6 text-center text-sm">
-        <span class="text-gray-600">아직 회원이 아니신가요?</span>
+        <span class="text-gray-500">아직 회원이 아니신가요?</span>
         <router-link
           :to="{ name: 'register' }"
           class="ml-2 font-medium text-orange-500 hover:text-orange-600"

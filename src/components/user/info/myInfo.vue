@@ -2,7 +2,7 @@
 <template>
   <div class="flex h-full w-full items-center justify-center">
     <div class="mx-auto w-2/5 p-8">
-      <h1 class="font-paperlogy mb-8 text-2xl">내 정보 관리</h1>
+      <h1 class="mb-8 font-paperlogy text-2xl">내 정보 관리</h1>
 
       <form @submit.prevent="updateUserInfo" class="w-full space-y-6">
         <div class="grid grid-cols-1 gap-8">
@@ -90,10 +90,13 @@
 
 <script setup>
 import { ref, onMounted, reactive } from 'vue'
-import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import api from '@/api/axios' // axios 대신 api 인스턴스 사용
-const router = useRouter()
+// 닉네임 중복 확인 관련 상태 추가
+const isCheckingNickname = ref(false)
+const isNicknameAvailable = ref(false)
+const nicknameMessage = ref('')
+
 const userStore = useUserStore()
 const userInfo = reactive({
   email: '',
@@ -104,10 +107,10 @@ const userInfo = reactive({
 
 // 유저 정보 수정
 const updateUserInfo = async () => {
-  //  if (!isNicknameAvailable.value && userInfo.nickname !== userStore.userNickname) {
-  //    alert('닉네임 중복 확인을 해주세요.')
-  //    return
-  // }
+  if (!isNicknameAvailable.value && userInfo.nickname !== userStore.userNickname) {
+    alert('닉네임 중복 확인을 해주세요.')
+    return
+  }
 
   try {
     const response = await api.put(`user/${userStore.userId}`, {
@@ -127,37 +130,30 @@ const updateUserInfo = async () => {
   }
 }
 
-// 닉네임 중복 확인 관련 상태 추가
-const isCheckingNickname = ref(false)
-const isNicknameAvailable = ref(false)
-const nicknameMessage = ref('')
-
 // 닉네임 중복 확인 함수
 const checkNicknameDuplicate = async () => {
-  console.log('userInfo : ', userInfo.nickname)
-  console.log('userStore: ', userStore.userNickname)
   if (!userInfo.nickname) {
     nicknameMessage.value = '닉네임을 입력해주세요.'
     isNicknameAvailable.value = false
     return
   }
-
-  // 현재 사용자의 닉네임과 같다면 중복 확인 불필요
-  if (userInfo.nickname === userStore.userNickname) {
-    nicknameMessage.value = '현재 사용 중인 닉네임입니다.'
-    isNicknameAvailable.value = true
-    return
-  }
-
   isCheckingNickname.value = true
   nicknameMessage.value = ''
 
   try {
-    const response = await api.get(`user/check-nickname/${userInfo.nickname}`)
-    isNicknameAvailable.value = response.data.available
-    nicknameMessage.value = response.data.available
-      ? '사용 가능한 닉네임입니다.'
-      : '이미 사용 중인 닉네임입니다.'
+    const response = await api.get('auth/valid-nickname', {
+      params: {
+        nickname: userInfo.nickname,
+      },
+    })
+
+    if (response.data.message == 1) {
+      nicknameMessage.value = '이미 사용 중인 닉네임입니다.'
+      isNicknameAvailable.value = false
+    } else {
+      nicknameMessage.value = '사용 가능한 닉네임입니다.'
+      isNicknameAvailable.value = true
+    }
   } catch (error) {
     console.error('닉네임 중복 확인 실패:', error)
     nicknameMessage.value = '중복 확인에 실패했습니다. 다시 시도해주세요.'

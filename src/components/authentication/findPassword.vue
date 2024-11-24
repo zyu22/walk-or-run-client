@@ -1,142 +1,240 @@
-<!-- components/FindPassword.vue -->
 <template>
-    <div class="max-w-md mx-auto p-8">
-      <!-- 로고 -->
-      <div class="text-center mb-12">
-        <h1 class="text-3xl font-bold">
-          <span class="text-[#FF6B4D]">Walk</span>
-          <span class="text-[#4DFF5C]">Or</span>
-          <span class="text-[#FF6B4D]">Run</span>
-        </h1>
+  <div class="flex min-h-screen items-center justify-center">
+    <div class="w-full max-w-md rounded-lg bg-white p-8 shadow-md">
+      <div class="mb-6 flex justify-center">
+        <img
+          src="@/assets/logo.png"
+          alt="WalkOrRun"
+          class="h-40 w-auto cursor-pointer"
+          @click="router.push({ name: 'register' })"
+        />
       </div>
-  
-      <h2 class="text-center text-xl mb-4">비밀번호 찾기</h2>
-      <p class="text-center text-gray-600 text-sm mb-8">아래의 정보를 입력하세요</p>
-  
-      <form @submit.prevent="verifyUserInfo" class="space-y-6">
-        <!-- 이름 -->
-        <div>
-          <label for="name" class="block text-sm">이름</label>
-          <input
-            type="text"
-            id="name"
-            v-model="findForm.name"
-            placeholder="김유정"
-            required
-            class="w-full px-3 py-2 mt-1 border border-gray-200 rounded-md"
-          />
-        </div>
-  
-        <!-- 전화번호 -->
-        <div>
-          <label for="phone" class="block text-sm">전화번호</label>
-          <input
-            type="tel"
-            id="phone"
-            v-model="findForm.phone"
-            placeholder="010-1234-5678"
-            required
-            class="w-full px-3 py-2 mt-1 border border-gray-200 rounded-md"
-          />
-        </div>
-  
-        <!-- 비밀번호 질문 -->
-        <div>
-          <label for="securityQuestion" class="block text-sm">비밀번호 질문</label>
-          <select
-            id="securityQuestion"
-            v-model="findForm.securityQuestion"
-            required
-            class="w-full px-3 py-2 mt-1 border border-gray-200 rounded-md bg-white"
+
+      <div v-if="!foundUser">
+        <form @submit.prevent="checkUserPassword" class="space-y-12">
+          <!-- 이름 -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700">이메일</label>
+            <input
+              type="email"
+              v-model="findForm.email"
+              required
+              class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500"
+            />
+          </div>
+
+          <!-- 비밀번호 질문 -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700">비밀번호 질문</label>
+            <select
+              v-model="findForm.passwordQuestionId"
+              required
+              class="mt-1 block w-full rounded-md border-gray-300 bg-white shadow-sm focus:border-orange-500 focus:ring-orange-500"
+            >
+              <option value="" disabled>질문을 선택해주세요</option>
+              <option v-for="question in passwordQuestions" :key="question.id" :value="question.id">
+                {{ question.question }}
+              </option>
+            </select>
+          </div>
+
+          <!-- 답변 -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700">비밀번호 답변</label>
+            <input
+              type="text"
+              v-model="findForm.passwordQuestionAnswer"
+              required
+              class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500"
+            />
+          </div>
+
+          <!-- 버튼 -->
+          <button
+            type="submit"
+            class="w-full rounded-md bg-orange-500 px-4 py-2 text-white transition-colors hover:bg-orange-600"
           >
-            <option value="" disabled>비밀번호 질문을 선택하세요</option>
-            <option v-for="question in securityQuestions" :key="question.id" :value="question.id">
-              {{ question.question }}
-            </option>
-          </select>
+            비밀번호 변경
+          </button>
+        </form>
+        <!-- 로그인 링크 -->
+        <div class="mt-4 flex justify-center space-x-4 text-sm text-gray-600">
+          <span class="text-gray-500">이미 계정이 있으신가요?</span>
+          <router-link
+            :to="{ name: 'login' }"
+            class="font-medium text-orange-500 hover:text-orange-600"
+          >
+            로그인하기
+          </router-link>
         </div>
-  
-        <!-- 답변 -->
+      </div>
+      <div v-else class="space-y-12">
+        <!-- 비밀번호 변경 form -->
         <div>
-          <label for="answer" class="block text-sm">답변</label>
-          <input
-            type="text"
-            id="answer"
-            v-model="findForm.answer"
-            placeholder="답변을 입력하세요"
-            required
-            class="w-full px-3 py-2 mt-1 border border-gray-200 rounded-md"
-          />
+          <form @submit.prevent="updatePassword" class="space-y-12">
+            <!-- 새 비밀번호 입력 -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700">새 비밀번호</label>
+              <div class="relative">
+                <input
+                  :type="showPassword ? 'text' : 'password'"
+                  v-model="resetForm.password"
+                  required
+                  class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500"
+                />
+                <button
+                  type="button"
+                  class="absolute right-4 top-1/2 -translate-y-1/2 cursor-pointer"
+                  @click="togglePassword"
+                >
+                  <svg
+                    v-if="!showPassword"
+                    class="h-5 w-5"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                    <circle cx="12" cy="12" r="3"></circle>
+                  </svg>
+                  <svg
+                    v-else
+                    class="h-5 w-5"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <path
+                      d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"
+                    ></path>
+                    <line x1="1" y1="1" x2="23" y2="23"></line>
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <!-- 새 비밀번호 확인 -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700">새 비밀번호 확인</label>
+              <input
+                :type="showPassword ? 'text' : 'password'"
+                v-model="resetForm.confirmPassword"
+                required
+                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500"
+              />
+            </div>
+
+            <!-- 비밀번호 변경 버튼 -->
+            <button
+              type="submit"
+              class="w-full rounded-md bg-orange-500 px-4 py-2 text-white transition-colors hover:bg-orange-600"
+              :disabled="isLoading"
+            >
+              {{ isLoading ? '변경 중...' : '비밀번호 변경' }}
+            </button>
+          </form>
         </div>
-  
-        <!-- 버튼 -->
-        <button
-          type="submit"
-          class="w-full py-3 bg-black text-white rounded-md hover:opacity-90"
-        >
-          비밀번호 재설정하기
-        </button>
-      </form>
-  
-      <!-- 하단 링크 -->
-      <p class="text-center text-sm text-gray-500 mt-6">
-        이미 계정이 있으신가요?
-        <router-link to="/login" class="text-[#FF6B4D]">
-          여기에서 로그인하세요
-        </router-link>
-      </p>
-  
-      <!-- 푸터 -->
-      <footer class="text-center text-gray-500 text-sm mt-12">
-        © 2024 WalkOrRun. All rights reserved.
-      </footer>
+      </div>
     </div>
-  </template>
-  
-  <script setup>
-  import { reactive } from 'vue'
-  import { useRouter } from 'vue-router'
-  
-  const router = useRouter()
-  
-  const securityQuestions = [
-    { id: 1, question: '나의 보물 1호는?' },
-    { id: 2, question: '내가 태어난 도시는?' },
-    { id: 3, question: '어머니의 성함은?' },
-    { id: 4, question: '아버지의 성함은?' },
-  ]
-  
-  const findForm = reactive({
-    name: '',
-    phone: '',
-    securityQuestion: '',
-    answer: ''
-  })
-  
-  const verifyUserInfo = async () => {
-    try {
-      // API 호출하여 사용자 정보 확인
-      const response = await fetch('http://localhost:8080/api/verify-user', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(findForm)
-      })
-  
-      if (response.ok) {
-        // 검증 성공시 비밀번호 재설정 페이지로 이동
-        router.push({
-          name: 'resetPassword',
-          // 필요한 정보를 state로 전달
-          state: { verified: true, userInfo: findForm }
-        })
-      } else {
-        alert('입력하신 정보와 일치하는 계정을 찾을 수 없습니다.')
-      }
-    } catch (error) {
-      console.error('오류:', error)
-      alert('오류가 발생했습니다. 다시 시도해주세요.')
+  </div>
+</template>
+
+<script setup>
+import { ref, onMounted, reactive } from 'vue'
+import { useRouter } from 'vue-router'
+import api from '@/api/axios'
+
+const router = useRouter()
+const passwordQuestions = ref([])
+const foundUser = ref(false)
+const findForm = reactive({
+  email: '',
+  passwordQuestionId: '',
+  passwordQuestionAnswer: '',
+})
+
+const showPassword = ref(false)
+const isLoading = ref(false)
+const resetForm = reactive({
+  password: '',
+  confirmPassword: '',
+})
+
+// DB에서 보안 질문 목록 가져오기
+const getpasswordQuestion = async () => {
+  try {
+    const response = await api.get('auth/password-question')
+    if (response.status === 200) {
+      passwordQuestions.value = Object.entries(response.data).map(([id, question]) => ({
+        id: parseInt(id),
+        question: question,
+      }))
     }
+  } catch (error) {
+    console.error('보안 질문 로드 실패:', error)
   }
-  </script>
+}
+
+const checkUserPassword = async () => {
+  try {
+    const response = await api.post('auth/password/find', {
+      userEmail: findForm.email,
+      userPasswordQuestionId: findForm.passwordQuestionId,
+      userPasswordAnswer: findForm.passwordQuestionAnswer,
+    })
+
+    if (response.status == 200) {
+      foundUser.value = true
+    } else {
+      alert('해당하는 유저가 없습니다. 확인해주세요.')
+    }
+  } catch (error) {
+    console.error('에러 상세:', {
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      data: error.response?.data,
+      message: error.message,
+    })
+  }
+}
+
+const togglePassword = () => {
+  showPassword.value = !showPassword.value
+}
+
+const updatePassword = async () => {
+  if (resetForm.password !== resetForm.confirmPassword) {
+    alert('비밀번호가 일치하지 않습니다.')
+    return
+  }
+
+  isLoading.value = true
+  try {
+    console.log('userEmail: ', findForm.email)
+    console.log('userPassword: ', resetForm.password)
+    const response = await api.post('auth/password/change', {
+      userEmail: findForm.email,
+      userPassword: resetForm.password,
+    })
+
+    console.log(response)
+    if (response.status === 200) {
+      alert('비밀번호가 성공적으로 변경되었습니다.')
+      router.push({ name: 'login' })
+    }
+  } catch (error) {
+    console.error('에러 상세:', {
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      data: error.response?.data,
+      message: error.message,
+    })
+    alert('비밀번호 변경에 실패했습니다. 다시 시도해주세요.')
+  } finally {
+    isLoading.value = false
+  }
+}
+onMounted(getpasswordQuestion)
+</script>
