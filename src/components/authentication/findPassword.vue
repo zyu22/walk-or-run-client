@@ -219,7 +219,7 @@ const updatePassword = async () => {
       userPassword: resetForm.password,
     })
 
-    console.log(response)
+    console.log(response``)
     if (response.status === 200) {
       alert('비밀번호가 성공적으로 변경되었습니다.')
       router.push({ name: 'login' })
@@ -238,3 +238,4 @@ const updatePassword = async () => {
 }
 onMounted(getpasswordQuestion)
 </script>
+~~

@@ -8,7 +8,7 @@
       <!-- ADMIN인 경우 -->
       <template v-if="isAdmin">
         <AdminSidebar @logout="handleLogout" />
-        <div class="mr-6 h-[calc(100vh-3rem)] flex-1 rounded-2xl bg-gray-50 p-8">
+        <div class="mr-6 flex-1 rounded-2xl bg-gray-50 p-8">
           <RouterView />
         </div>
       </template>
@@ -16,7 +16,7 @@
       <!-- USER인 경우 -->
       <template v-else>
         <Sidebar @logout="handleLogout" />
-        <div class="mr-6 h-[calc(100vh-3rem)] flex-1 rounded-2xl bg-gray-50 p-8">
+        <div class="mr-6 flex-1 rounded-2xl bg-gray-50 p-8">
           <RouterView />
         </div>
       </template>

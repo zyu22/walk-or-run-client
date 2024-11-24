@@ -26,36 +26,69 @@
     <div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
       <div
         v-for="challenge in filteredChallenges"
-        :key="challenge.id"
+        :key="challenge.challengeId"
         @click="openChallengeModal(challenge)"
         class="group cursor-pointer rounded-lg bg-white p-6 shadow-sm transition-all hover:shadow-md"
+        :class="{
+          'opacity-75': challenge.dday === '종료',
+          'border border-gray-200': challenge.dday === '종료',
+        }"
       >
         <div class="mb-4 flex items-start justify-between">
           <span
             class="rounded-full px-3 py-1 text-sm"
-            :class="getChallengeTypeColor(challenge.type)"
+            :class="getChallengeTypeColor(getChallengeType(challenge.challengeTitle))"
           >
-            {{ challenge.type }}
+            {{ getChallengeType(challenge) }}
           </span>
-          <span class="text-sm text-gray-500">D-{{ challenge.dday }}</span>
+          <span class="text-sm text-gray-500">{{ challenge.dday || 0 }}</span>
         </div>
 
-        <h3 class="mb-2 text-lg font-semibold group-hover:text-[#ff6f3b]">{{ challenge.title }}</h3>
-        <p class="mb-4 text-sm text-gray-600">{{ challenge.description }}</p>
-
+        <h3
+          class="mb-2 text-lg font-semibold"
+          :class="{
+            'text-gray-900 group-hover:text-[#ff6f3b]': challenge.dday !== '종료',
+            'text-gray-400': challenge.dday === '종료',
+          }"
+        >
+          {{ challenge.challengeTitle }}
+        </h3>
+        <p
+          class="mb-4 text-sm"
+          :class="{
+            'text-gray-600': challenge.dday !== '종료',
+            'text-gray-400': challenge.dday === '종료',
+          }"
+        >
+          {{ challenge.challengeDescription }}
+        </p>
         <div class="space-y-2">
           <div class="flex justify-between text-sm text-gray-500">
             <span>참여율</span>
-            <span>{{ challenge.progress }}%</span>
+            <span
+              >{{
+                ((challenge.challengeParticipantCnt / challenge.challengeTargetCnt) * 100).toFixed(
+                  1,
+                )
+              }}%</span
+            >
           </div>
           <div class="h-2 w-full rounded-full bg-gray-100">
             <div
-              class="h-2 rounded-full bg-[#ff6f3b]"
-              :style="{ width: `${challenge.progress}%` }"
+              class="h-2 rounded-full transition-all"
+              :class="{
+                'bg-red-500': getParticipationRate(challenge) < 30,
+                'bg-yellow-500':
+                  getParticipationRate(challenge) >= 30 && getParticipationRate(challenge) < 70,
+                'bg-[#ff6f3b]': getParticipationRate(challenge) >= 70,
+              }"
+              :style="{
+                width: `${((challenge.challengeParticipantCnt / challenge.challengeTargetCnt) * 100).toFixed(1)}%`,
+              }"
             ></div>
           </div>
           <div class="text-right text-sm text-gray-500">
-            {{ challenge.participants.toLocaleString() }}명 참여 중
+            {{ challenge.challengeParticipantCnt || 0 }}명 참여 중
           </div>
         </div>
       </div>
@@ -63,11 +96,11 @@
   </div>
 
   <!-- 페이지네이션 -->
-  <div class="mt-8 flex justify-center space-x-2">
+  <div v-if="pageInfo.totalPages > 1" class="mt-8 flex justify-center space-x-2">
     <button
-      v-for="page in totalPages"
+      v-for="page in pageInfo.totalPages"
       :key="page"
-      @click="currentPage = page"
+      @click="handlePageChange(page)"
       class="rounded-lg px-4 py-2"
       :class="currentPage === page ? 'bg-[#ff6f3b] text-white' : 'bg-white text-gray-600'"
     >
@@ -79,6 +112,8 @@
   <ChallengeDetailModal
     v-if="selectedChallenge"
     :challenge="selectedChallenge"
+    :challengeDetail="challengeDetail"
+    :isLoading="isModalLoading"
     @close="closeModal"
   />
 </template>
@@ -86,24 +121,71 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import ChallengeDetailModal from '@/components/user/challenge/challengeDetailModal.vue'
-import api from '@/api/axios.js'
+import { useUserStore } from '@/stores/user'
+import api from '@/api/axios'
+import { differenceInDays } from 'date-fns'
 
+const userStore = useUserStore()
 const challengeTypes = ['All', 'Daily', 'Weekly', 'Monthly', 'Event']
 const filterType = ref('All')
 const currentPage = ref(1)
 const selectedChallenge = ref(null)
+const challengeDetail = ref(null) // 챌린지 상세 정보 저장
+const isModalLoading = ref(false) // 모달 로딩 상태
 const challenges = ref([])
 const isLoading = ref(false)
 const error = ref(null)
+const pageInfo = ref({
+  currentPage: 1,
+  pageSize: 16,
+  totalElements: 0,
+  totalPages: 0,
+})
+
+const getParticipationRate = (challenge) => {
+  if (!challenge.challengeTargetCnt || challenge.challengeTargetCnt === 0) return 0
+  return ((challenge.challengeParticipantCnt / challenge.challengeTargetCnt) * 100).toFixed(1)
+}
+
+const getChallengeType = (challenge) => {
+  console.log(challenge)
+  // 챌린지 객체 전체를 받아서 필드명 확인
+  console.log('챌린지 생성일:', challenge.challengeCreateDate) // 또는 challengeCreateDate
+  console.log('챌린지 종료일:', challenge.challengeCreateDate) // 또는 challengeDeleteDate
+
+  const start = new Date(challenge.challengeCreateDate)
+  const end = new Date(challenge.challenge_delete_date)
+
+  console.log('변환된 시작일:', start)
+  console.log('변환된 종료일:', end)
+
+  const diffTime = end.getTime() - start.getTime()
+  const diffDays = diffTime / (1000 * 60 * 60 * 24)
+
+  console.log('일수 차이:', diffDays)
+
+  if (diffDays <= 1) return 'Daily'
+  if (diffDays <= 7) return 'Weekly'
+  if (diffDays <= 31) return 'Monthly'
+  return 'Event'
+}
 
 // API에서 챌린지 데이터 가져오기
-const fetchChallenges = async () => {
+const getChallege = async (page = 1) => {
   isLoading.value = true
   error.value = null
   try {
-    const response = await api.get('/challenge')
-    console.log(response)
-    challenges.value = response.data
+    const response = await api.get('/challenge', {
+      params: {
+        page: page, // 백엔드에서 처리하므로 그대로 전달
+        size: 16,
+      },
+    })
+    // 응답 데이터 구조 확인
+    console.log('API Response:', response.data)
+    challenges.value = response.data.content
+    pageInfo.value = response.data.pageInfo
+    currentPage.value = page
   } catch (err) {
     console.error('챌린지 데이터를 불러오는 데 실패했습니다:', err)
     error.value = '챌린지 데이터를 불러오는 데 실패했습니다. 다시 시도해 주세요.'
@@ -112,14 +194,41 @@ const fetchChallenges = async () => {
   }
 }
 
-// 컴포넌트 마운트 시 데이터 가져오기
-onMounted(fetchChallenges)
+// 챌린지 상세 정보 가져오기
+const getChallengeDetail = async (challengeId) => {
+  isModalLoading.value = true
+  try {
+    const response = await api.get(`/challenge/${challengeId}`, {
+      params: {
+        userId: userStore.userId,
+      },
+    })
+    console.log('상세보기: ', response)
+    challengeDetail.value = response.data
+  } catch (err) {
+    console.error('챌린지 상세 정보를 불러오는 데 실패했습니다:', err)
+    alert('챌린지 상세 정보를 불러오는 데 실패했습니다.')
+  } finally {
+    isModalLoading.value = false
+  }
+}
+
+// 페이지 변경 핸들러
+const handlePageChange = (page) => {
+  getChallege(page)
+}
+// 컴포넌트 마운트 시 첫 페이지 데이터 가져오기
+onMounted(() => {
+  getChallege(1)
+})
 
 const filteredChallenges = computed(() => {
   if (filterType.value === 'All') {
     return challenges.value
   }
-  return challenges.value.filter((challenge) => challenge.type === filterType.value)
+  return challenges.value.filter(
+    (challenge) => getChallengeType(challenge.challengeTitle) === filterType.value,
+  )
 })
 
 const getChallengeTypeColor = (type) => {
@@ -132,10 +241,10 @@ const getChallengeTypeColor = (type) => {
   return colors[type] || 'bg-gray-100 text-gray-600'
 }
 
-const totalPages = computed(() => Math.ceil(filteredChallenges.value.length / 8))
-
-const openChallengeModal = (challenge) => {
-  selectedChallenge.value = challenge
+// 모달 열기 함수 수정
+const openChallengeModal = async (challenge) => {
+  selectedChallenge.value = challenge // 기본 정보 먼저 설정
+  await getChallengeDetail(challenge.challengeId) // 상세 정보 가져오기
 }
 
 const closeModal = () => {

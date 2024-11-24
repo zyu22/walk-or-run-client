@@ -1,191 +1,126 @@
-// components/ChallengeDetailModal.vue
+<!-- ChallengeDetailModal.vue -->
 <template>
-  <Modal @close="$emit('close')">
-    <div class="p-6">
-      <!-- 챌린지 정보 -->
-      <div class="border-b pb-6">
-        <h3 class="mb-4 text-xl font-bold">{{ challenge.title }}</h3>
-        <div class="mb-4">
-          <span
-            class="rounded-full px-3 py-1 text-sm"
-            :class="getChallengeTypeColor(challenge.type)"
-          >
-            {{ challenge.type }}
-          </span>
-        </div>
-        <p class="mb-4 text-gray-600">{{ challenge.description }}</p>
-        <div class="space-y-2">
-          <div class="flex justify-between text-sm">
-            <span class="text-gray-600">기간</span>
-            <span>{{ challenge.period }}</span>
-          </div>
-          <div class="flex justify-between text-sm">
-            <span class="text-gray-600">참여자</span>
-            <span>{{ challenge.participants.toLocaleString() }}명</span>
-          </div>
-          <div class="flex justify-between text-sm">
-            <span class="text-gray-600">달성률</span>
-            <span>{{ challenge.progress }}%</span>
-          </div>
-        </div>
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+    <div class="w-full max-w-2xl rounded-lg bg-white p-8">
+      <!-- 로딩 상태 -->
+      <div v-if="isLoading" class="flex justify-center py-8">
+        <div class="animate-spin text-[#ff6f3b]">Loading...</div>
       </div>
 
-      <!-- 참여하기 버튼 -->
-      <div class="border-b py-4">
-        <button
-          class="w-full rounded-lg bg-[#ff6f3b] py-2 text-white transition-colors hover:bg-[#ff825c]"
-        >
-          참여하기
-        </button>
-      </div>
-
-      <!-- 댓글 입력 -->
-      <div class="border-b py-4">
-        <div class="flex gap-2">
-          <input
-            v-model="newComment"
-            type="text"
-            placeholder="댓글을 입력하세요"
-            class="flex-1 rounded-lg border px-4 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500"
-            @keyup.enter="addComment"
-          />
-          <button
-            @click="addComment"
-            class="rounded-lg bg-gray-800 px-4 py-2 text-white transition-colors hover:bg-gray-700"
-          >
-            등록
-          </button>
-        </div>
-      </div>
-
-      <!-- 댓글 목록 -->
-      <div class="space-y-4 py-4">
-        <div v-if="comments.length === 0" class="py-8 text-center text-gray-500">
-          첫 댓글을 작성해보세요!
-        </div>
-        <div
-          v-for="comment in paginatedComments"
-          :key="comment.id"
-          class="border-b pb-4 last:border-0"
-        >
-          <div class="mb-2 flex items-start justify-between">
-            <div>
-              <span class="font-semibold">{{ comment.username }}</span>
-              <span class="ml-2 text-sm text-gray-500">{{ comment.date }}</span>
-            </div>
-            <button
-              v-if="comment.isMyComment"
-              @click="deleteComment(comment.id)"
-              class="text-sm text-gray-500 hover:text-red-500"
+      <!-- 상세 정보 -->
+      <div v-else>
+        <!-- 헤더 -->
+        <div class="mb-6 flex items-start justify-between">
+          <div>
+            <span
+              class="mb-2 inline-block rounded-full px-3 py-1 text-sm"
+              :class="getChallengeTypeColor(getChallengeType(challenge.challengeTitle))"
             >
-              삭제
-            </button>
+              {{ getChallengeType(challenge.challengeTitle) }}
+            </span>
+            <h2 class="text-2xl font-bold">{{ challenge.challengeTitle }}</h2>
           </div>
-          <p class="text-gray-700">{{ comment.content }}</p>
+          <button @click="$emit('close')" class="text-gray-500 hover:text-gray-700">
+            <span class="sr-only">Close</span>
+            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </button>
         </div>
 
-        <!-- 페이지네이션 -->
-        <div v-if="comments.length > 0" class="flex justify-center gap-2 pt-4">
-          <button
-            v-for="page in totalPages"
-            :key="page"
-            @click="currentPage = page"
-            class="rounded px-3 py-1"
-            :class="
-              currentPage === page
-                ? 'bg-[#ff6f3b] text-white'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-            "
-          >
-            {{ page }}
-          </button>
+        <!-- 상세 내용 -->
+        <div class="space-y-6">
+          <!-- 기본 정보 -->
+          <div>
+            <p class="text-gray-600">{{ challenge.challengeDescription }}</p>
+          </div>
+
+          <!-- 챌린지 정보 -->
+          <div class="grid grid-cols-2 gap-4">
+            <div class="rounded-lg bg-gray-50 p-4">
+              <p class="text-sm text-gray-500">참여자 수</p>
+              <p class="text-lg font-semibold">{{ challenge.challengeParticipantCnt || 0 }}명</p>
+            </div>
+            <div class="rounded-lg bg-gray-50 p-4">
+              <p class="text-sm text-gray-500">참여율</p>
+              <p class="text-lg font-semibold">
+                {{
+                  (
+                    (challenge.challengeParticipantCnt / challenge.challengeTargetCnt) *
+                    100
+                  ).toFixed(1)
+                }}%
+              </p>
+            </div>
+          </div>
+
+          <!-- 상세 정보 -->
+          <div v-if="challengeDetail">
+            <!-- 여기에 API에서 받아온 상세 정보를 표시 -->
+            <div class="rounded-lg bg-gray-50 p-4">
+              <h3 class="mb-2 font-semibold">챌린지 상세 정보</h3>
+              <!-- API 응답 구조에 따라 적절히 표시 -->
+              <div class="space-y-2">
+                <p>
+                  <span class="font-medium">시작일:</span> {{ challengeDetail.challengeCreateDate }}
+                </p>
+                <p>
+                  <span class="font-medium">종료일:</span> {{ challengeDetail.challengeDeleteDate }}
+                </p>
+                <p>
+                  <span class="font-medium">카테고리:</span>
+                  {{ challengeDetail.challengeCategoryName }}
+                </p>
+                <!-- 기타 상세 정보들 -->
+              </div>
+            </div>
+          </div>
+
+          <!-- 참여하기 버튼 -->
+          <div class="mt-6">
+            <button
+              class="w-full rounded-lg px-4 py-2 text-white transition-colors"
+              :class="{
+                'cursor-pointer bg-[#ff6f3b] hover:bg-[#ff5722]': challenge.dday !== '종료',
+                'cursor-not-allowed bg-gray-400': challenge.dday === '종료',
+              }"
+              :disabled="challenge.dday === '종료'"
+            >
+              {{ challenge.dday === '종료' ? '챌린지 종료' : '챌린지 참여하기' }}
+            </button>
+            <p v-if="challenge.dday === '종료'" class="mt-2 text-center text-sm text-gray-500">
+              종료된 챌린지입니다
+            </p>
+          </div>
         </div>
       </div>
     </div>
-  </Modal>
+  </div>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
-import Modal from '@/components/user/dashboard/modal.vue'
+import { defineProps, defineEmits } from 'vue'
 
 const props = defineProps({
-  challenge: {
-    type: Object,
-    required: true,
-  },
+  challenge: Object,
+  challengeDetail: Object,
+  isLoading: Boolean,
 })
 
-// 댓글 관련 상태
-const newComment = ref('')
-const currentPage = ref(1)
-const commentsPerPage = 5
-
-// 샘플 댓글 데이터
-const comments = ref([
-  {
-    id: 1,
-    username: 'Runner001',
-    content: '이번 챌린지 꼭 완주하고 싶어요! 화이팅!',
-    date: '2024-03-21 10:30',
-    isMyComment: true,
-  },
-  {
-    id: 2,
-    username: 'healthyLife',
-    content: '저번에도 참여했는데 정말 좋았어요. 이번에도 참여합니다!',
-    date: '2024-03-21 11:15',
-    isMyComment: false,
-  },
-  {
-    id: 3,
-    username: 'walkingQueen',
-    content: '함께하실 분 구해요~',
-    date: '2024-03-21 12:00',
-    isMyComment: false,
-  },
-])
-
-// 페이지네이션된 댓글
-const paginatedComments = computed(() => {
-  const start = (currentPage.value - 1) * commentsPerPage
-  const end = start + commentsPerPage
-  return comments.value.slice(start, end)
-})
-
-const totalPages = computed(() => Math.ceil(comments.value.length / commentsPerPage))
-
-// 댓글 추가
-const addComment = () => {
-  if (!newComment.value.trim()) return
-
-  comments.value.unshift({
-    id: Date.now(),
-    username: '현재사용자', // 실제로는 로그인된 사용자 정보 사용
-    content: newComment.value,
-    date: new Date().toLocaleString(),
-    isMyComment: true,
-  })
-
-  newComment.value = ''
-  currentPage.value = 1
+// 함수들을 컴포넌트 내부에서 정의
+const getChallengeType = (title) => {
+  if (title.includes('DAILY')) return 'Daily'
+  if (title.includes('WEEKLY')) return 'Weekly'
+  if (title.includes('MONTHLY')) return 'Monthly'
+  if (title.includes('EVENT')) return 'Event'
+  return 'Daily'
 }
 
-// 댓글 삭제
-const deleteComment = (commentId) => {
-  const confirm = window.confirm('댓글을 삭제하시겠습니까?')
-  if (confirm) {
-    comments.value = comments.value.filter((comment) => comment.id !== commentId)
-
-    // 페이지 조정
-    const maxPage = Math.ceil(comments.value.length / commentsPerPage)
-    if (currentPage.value > maxPage) {
-      currentPage.value = maxPage || 1
-    }
-  }
-}
-
-// 챌린지 타입별 색상
 const getChallengeTypeColor = (type) => {
   const colors = {
     Daily: 'bg-orange-100 text-orange-600',

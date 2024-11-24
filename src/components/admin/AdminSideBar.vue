@@ -3,7 +3,7 @@
     <!-- Left Padding for Sidebar -->
     <div class="pl-6">
       <!-- Sidebar with gray background and spacing -->
-      <div class="h-[calc(100vh-3rem)] w-72 rounded-2xl bg-gray-50">
+      <div class="h-full w-72 rounded-2xl bg-gray-50">
         <!-- Navigation Container -->
         <div class="flex h-full flex-col">
           <!-- Logo Section -->
