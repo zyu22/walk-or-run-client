@@ -8,7 +8,7 @@
       <!-- ADMIN인 경우 -->
       <template v-if="isAdmin">
         <AdminSidebar @logout="handleLogout" />
-        <div class="mr-6 flex-1 rounded-2xl bg-gray-50 p-8 overflow-y-auto">
+        <div class="mr-6 flex-1 overflow-y-auto rounded-2xl bg-gray-50 p-8">
           <RouterView />
         </div>
       </template>
@@ -16,7 +16,7 @@
       <!-- USER인 경우 -->
       <template v-else>
         <Sidebar @logout="handleLogout" />
-        <div class="mr-6 flex-1 rounded-2xl bg-gray-50 p-8 overflow-y-auto">
+        <div class="mr-6 flex-1 overflow-y-auto rounded-2xl bg-gray-50 p-8">
           <RouterView />
         </div>
       </template>
@@ -24,7 +24,6 @@
     <Footer class="pb-8"></Footer>
   </div>
 </template>
-
 
 <script setup>
 import { computed, onMounted } from 'vue'
