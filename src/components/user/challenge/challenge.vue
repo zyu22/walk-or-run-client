@@ -1,7 +1,26 @@
 <template>
   <!-- 헤더 -->
+  <div class="mb-8">
+    <h1 class="font-paperlogy text-5xl font-bold text-gray-900">Challenge</h1>
+  </div>
   <div class="mb-8 flex items-center justify-between">
-    <h1 class="text-2xl font-bold">Challenge</h1>
+    <!-- 상태 필터 -->
+    <div class="flex gap-2">
+      <button
+        v-for="status in challengeStatus"
+        :key="status"
+        @click="handleStatusChange(status)"
+        class="rounded-lg px-4 py-2 transition-colors"
+        :class="
+          filterStatus === status
+            ? 'bg-[#00B074] text-white'
+            : 'bg-white text-gray-600 hover:bg-gray-100'
+        "
+      >
+        {{ status }}
+      </button>
+    </div>
+
     <div class="flex gap-2">
       <button
         v-for="type in challengeTypes"
@@ -37,7 +56,7 @@
         <div class="mb-4 flex items-start justify-between">
           <span
             class="rounded-full px-3 py-1 text-sm"
-            :class="getChallengeTypeColor(getChallengeType(challenge.challengeTitle))"
+            :class="getChallengeTypeColor(getChallengeType(challenge))"
           >
             {{ getChallengeType(challenge) }}
           </span>
@@ -67,9 +86,10 @@
             <span>참여율</span>
             <span
               >{{
-                ((challenge.challengeParticipantCnt / challenge.challengeTargetCnt) * 100).toFixed(
-                  1,
-                )
+                Math.min(
+                  (challenge.challengeParticipantCnt / challenge.challengeTargetCnt) * 100,
+                  100,
+                ).toFixed(1)
               }}%</span
             >
           </div>
@@ -83,7 +103,7 @@
                 'bg-[#ff6f3b]': getParticipationRate(challenge) >= 70,
               }"
               :style="{
-                width: `${((challenge.challengeParticipantCnt / challenge.challengeTargetCnt) * 100).toFixed(1)}%`,
+                width: `${Math.min((challenge.challengeParticipantCnt / challenge.challengeTargetCnt) * 100, 100).toFixed(1)}%`,
               }"
             ></div>
           </div>
@@ -123,11 +143,12 @@ import { ref, computed, onMounted } from 'vue'
 import ChallengeDetailModal from '@/components/user/challenge/challengeDetailModal.vue'
 import { useUserStore } from '@/stores/user'
 import api from '@/api/axios'
-import { differenceInDays } from 'date-fns'
 
 const userStore = useUserStore()
-const challengeTypes = ['All', 'Daily', 'Weekly', 'Monthly', 'Event']
-const filterType = ref('All')
+const challengeTypes = ['전체', '일일', '주간', '월간', '이벤트']
+const challengeStatus = ['전체', '진행중인 챌린지', '종료된 챌린지']
+const filterStatus = ref('전체')
+const filterType = ref('전체')
 const currentPage = ref(1)
 const selectedChallenge = ref(null)
 const challengeDetail = ref(null) // 챌린지 상세 정보 저장
@@ -142,40 +163,53 @@ const pageInfo = ref({
   totalPages: 0,
 })
 
+// 필터 상태 변경 처리 함수
+const handleStatusChange = (status) => {
+  console.log('status: ', status)
+  filterStatus.value = status
+
+  getChallege() // 필터 상태 변경 시 API 호출
+}
+
 const getParticipationRate = (challenge) => {
   if (!challenge.challengeTargetCnt || challenge.challengeTargetCnt === 0) return 0
   return ((challenge.challengeParticipantCnt / challenge.challengeTargetCnt) * 100).toFixed(1)
 }
 
 const getChallengeType = (challenge) => {
-  console.log(challenge)
-  // 챌린지 객체 전체를 받아서 필드명 확인
-  console.log('챌린지 생성일:', challenge.challengeCreateDate) // 또는 challengeCreateDate
-  console.log('챌린지 종료일:', challenge.challengeCreateDate) // 또는 challengeDeleteDate
+  const start = new Date(challenge.challengeCreateDate) // 또는 challenge_create_date
+  const end = new Date(challenge.challengeDeleteDate) // 또는 challenge_delete_date
 
-  const start = new Date(challenge.challengeCreateDate)
-  const end = new Date(challenge.challenge_delete_date)
-
-  console.log('변환된 시작일:', start)
-  console.log('변환된 종료일:', end)
+  if (!start || !end) {
+    console.log('날짜 확인:', challenge) // 디버깅용
+    return '일일' // 기본값
+  }
 
   const diffTime = end.getTime() - start.getTime()
   const diffDays = diffTime / (1000 * 60 * 60 * 24)
 
-  console.log('일수 차이:', diffDays)
-
-  if (diffDays <= 1) return 'Daily'
-  if (diffDays <= 7) return 'Weekly'
-  if (diffDays <= 31) return 'Monthly'
-  return 'Event'
+  if (diffDays <= 1) return '일일'
+  if (diffDays <= 7) return '주간'
+  if (diffDays <= 31) return '월간'
+  return '이벤트'
 }
 
 // API에서 챌린지 데이터 가져오기
 const getChallege = async (page = 1) => {
   isLoading.value = true
   error.value = null
+
+  let apiEndpoint = '/challenge' // 기본 엔드포인트
+
+  // 필터 상태에 따라 다른 엔드포인트 설정
+  if (filterStatus.value === '진행중인 챌린지') {
+    apiEndpoint = '/challenge/active'
+  } else if (filterStatus.value === '종료된 챌린지') {
+    apiEndpoint = '/challenge/end'
+  }
+
   try {
-    const response = await api.get('/challenge', {
+    const response = await api.get(apiEndpoint, {
       params: {
         page: page, // 백엔드에서 처리하므로 그대로 전달
         size: 16,
@@ -223,28 +257,29 @@ onMounted(() => {
 })
 
 const filteredChallenges = computed(() => {
-  if (filterType.value === 'All') {
+  if (filterType.value === '전체') {
     return challenges.value
   }
-  return challenges.value.filter(
-    (challenge) => getChallengeType(challenge.challengeTitle) === filterType.value,
-  )
+
+  // 필터링 조건이 '일일', '주간', '월간', '이벤트'일 경우
+  return challenges.value.filter((challenge) => getChallengeType(challenge) === filterType.value)
 })
 
 const getChallengeTypeColor = (type) => {
   const colors = {
-    Daily: 'bg-orange-100 text-orange-600',
-    Weekly: 'bg-green-100 text-green-600',
-    Monthly: 'bg-blue-100 text-blue-600',
-    Event: 'bg-purple-100 text-purple-600',
+    일일: 'bg-orange-100 text-orange-600',
+    주간: 'bg-green-100 text-green-600',
+    월간: 'bg-blue-100 text-blue-600',
+    이벤트: 'bg-purple-100 text-purple-600',
   }
   return colors[type] || 'bg-gray-100 text-gray-600'
 }
 
-// 모달 열기 함수 수정
 const openChallengeModal = async (challenge) => {
+  console.log('open model: ', challenge)
   selectedChallenge.value = challenge // 기본 정보 먼저 설정
   await getChallengeDetail(challenge.challengeId) // 상세 정보 가져오기
+  // 여기서 모달을 연다
 }
 
 const closeModal = () => {
