@@ -1,94 +1,184 @@
-// HomeView.vue
 <template>
   <div>
-    <!-- 상단 헤더 영역 -->
     <div class="mb-8 flex items-center justify-between">
-      <!-- 좌측 타이틀 -->
       <div>
         <h1 class="font-paperlogy text-5xl font-bold text-gray-900">Dashboard</h1>
-        <p class="mt-1 text-sm text-gray-600">오늘의 활동을 확인하세요</p>
+        <p class="mt-1 text-sm text-gray-600">운동 중 걸음 수 데이터</p>
       </div>
-
-      <!-- 우측 날짜 선택기 -->
       <div class="flex items-center gap-4">
         <DateRangePicker @update-date-range="handleDateRangeUpdate" />
       </div>
     </div>
 
-    <!-- 상단 통계 카드들 -->
-    <div class="mb-8 grid grid-cols-4 gap-6">
-      <MetricCard title="총 걸음 수" :value="metrics.totalSteps" subtitle="총 걸음" icon="👣" />
-      <MetricCard title="평균 걸음" :value="metrics.avgSteps" subtitle="일일 평균" icon="📊" />
-      <MetricCard title="평균 심박수" :value="metrics.avgHeartRate" subtitle="BPM" icon="❤️" />
-      <MetricCard
-        title="소비 칼로리"
-        :value="metrics.totalCalories"
-        subtitle="총 칼로리"
-        icon="🔥"
-      />
+
+    <!-- 로딩/에러/데이터 표시 -->
+    <div v-if="loading" class="p-4 text-center">
+      데이터를 불러오는 중...
     </div>
 
-    <!-- 차트들 -->
-    <div class="mb-8 grid grid-cols-3 gap-6">
-      <DonutChart title="체중 감량" :percentage="metrics.weightLossPercentage" />
-      <DonutChart title="Customer Growth" :percentage="metrics.growthPercentage" />
-      <DonutChart title="Total Revenue" :percentage="metrics.revenuePercentage" />
+    <div v-else-if="error" class="p-4 bg-red-100 text-red-700 rounded">
+      {{ error }}
+      <button 
+        @click="retryFetch" 
+        class="ml-4 px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700"
+      >
+        다시 시도
+      </button>
     </div>
-
+    
+    <!-- 각 데이터 타입별 MetricCard -->
     <div class="grid grid-cols-2 gap-6">
-      <LineChart title="걸음수" :dateRange="{ startDate, endDate }" />
-      <BarChart title="Customer Map" :dateRange="{ startDate, endDate }" />
+      <MetricCard 
+      key="exerciseTime"
+      :records="recordsMap.exerciseTime"
+      title="운동시간"
+    />
+    </div>
+    <div class="grid grid-cols-2 gap-6">
+      <MetricCard 
+      key="distance"
+      :records="recordsMap.distance"
+      title="이동거리"
+    />
+    </div>
+    <div class="grid grid-cols-2 gap-6">
+      <MetricCard 
+      key="cadence"
+      :records="recordsMap.cadence"
+      title="케이던스"
+    />
+    </div>
+///////////////////////////////////////////////여기 수정해야함
+
+    <!-- 각 데이터 타입별 LineChart -->
+    <div class="grid grid-cols-2 gap-6">
+      <LineChart 
+      key="heartRate"
+      :records="recordsMap.heartRate"
+      title="심박수"
+    />
+    </div>
+    <!-- 각 데이터 타입별 BarChart -->
+    <div class="grid grid-cols-2 gap-6">
+      <BarChart 
+      key="step"
+      :records="recordsMap.step"
+      title="걸음 수"
+    />
+    </div>
+    <div class="grid grid-cols-2 gap-6">
+      <BarChart 
+      key="calorie"
+      :records="recordsMap.calorie"
+      title="칼로리"
+    />
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
-import MetricCard from '@/components/user/dashboard/metricCard.vue'
-import DonutChart from '@/components/user/dashboard/donutChart.vue'
-import LineChart from '@/components/user/dashboard/lineChart.vue'
-import BarChart from '@/components/user/dashboard/barChart.vue'
+import { ref, computed, onMounted } from 'vue'
+import { useUserStore } from '@/stores/user'
+import api from '@/api/axios'
 import DateRangePicker from '@/components/user/dashboard/dateRangePicker.vue'
+import BarChart from '@/components/user/dashboard/barChart.vue'
+import LineChart from '@/components/user/dashboard/lineChart.vue'
+import MetricCard from '@/components/user/dashboard/metricCard.vue'
 
+const userStore = useUserStore()
+const loading = ref(false)
+const error = ref(null)
 const startDate = ref(new Date().toISOString().split('T')[0])
 const endDate = ref(new Date().toISOString().split('T')[0])
 
-// 통계 데이터를 저장할 reactive 객체
-const metrics = reactive({
-  totalSteps: 2500,
-  avgSteps: 250,
-  avgHeartRate: 1.5,
-  totalCalories: 250,
-  weightLossPercentage: 81,
-  growthPercentage: 22,
-  revenuePercentage: 62,
+// 데이터 타입 정의
+const dataTypes = [
+  { key: 'step', label: '걸음 수', endpoint: 'record/step' },
+  { key: 'speed', label: '속도', endpoint: 'record/speed' },
+  { key: 'heartRate', label: '심박수', endpoint: 'record/heartRate' },
+  { key: 'exerciseTime', label: '운동 시간', endpoint: 'record/exerciseTime' },
+  { key: 'distance', label: '거리', endpoint: 'record/distance' },
+  { key: 'calorie', label: '칼로리', endpoint: 'record/calorie' },
+  { key: 'cadence', label: '케이던스', endpoint: 'record/cadence' }
+]
+
+// 각 데이터 타입별 records 저장
+const recordsMap = ref({
+  step: [],
+  speed: [],
+  heartRate: [],
+  exerciseTime: [],
+  distance: [],
+  calorie: [],
+  cadence: []
 })
 
-// 날짜 범위가 변경될 때 호출되는 함수
+// 재사용 가능한 데이터 fetch 함수
+const fetchData = async (dataType) => {
+  if (!checkAuthStatus()) {
+    error.value = '인증 토큰이 없습니다.'
+    return
+  }
+
+  try {
+    const response = await api.get(`/user/${userStore.userId}/${dataType.endpoint}`, {
+      params: {
+        startTime: startDate.value,
+        endTime: endDate.value,
+      }
+    })
+    
+    // 응답 데이터가 배열인지 확인하고 초기화
+    recordsMap.value[dataType.key] = Array.isArray(response.data) ? response.data : [];
+    
+    console.log(`Fetched ${dataType.label} data:`, recordsMap.value[dataType.key])
+    
+    if (!recordsMap.value[dataType.key].length) {
+      console.log(`No ${dataType.label} data available for selected period`)
+    }
+  } catch (err) {
+    console.error(`Failed to fetch ${dataType.label} data:`, err)
+    error.value = `${dataType.label} 데이터 로딩 실패: ${
+      err.response?.status === 401 ? '인증 오류' : err.message
+    }`
+    recordsMap.value[dataType.key] = [] 
+  }
+}
+
+// 모든 데이터 가져오기
+const fetchAllData = async () => {
+  loading.value = true
+  error.value = null
+
+  try {
+    await Promise.all(dataTypes.map(type => fetchData(type)))
+  } catch (err) {
+    console.error('Failed to fetch all data:', err)
+    error.value = '데이터 로딩 실패'
+  } finally {
+    loading.value = false
+  }
+}
+
 const handleDateRangeUpdate = async ({ startDate: newStartDate, endDate: newEndDate }) => {
   startDate.value = newStartDate
   endDate.value = newEndDate
-  await fetchMetricsData()
+  await fetchAllData()
 }
 
-// 검색 버튼 클릭 핸들러
-const handleSearch = async () => {
-  await fetchMetricsData()
+const retryFetch = () => {
+  fetchAllData()
 }
 
-// 데이터 가져오기 함수
-const fetchMetricsData = async () => {
-  // TODO: API 호출하여 선택된 날짜 범위의 데이터 가져오기
-  // 현재는 임시 데모 데이터 사용
-  metrics.totalSteps = 2500
-  metrics.avgSteps = 250
-  metrics.avgHeartRate = 1.5
-  metrics.totalCalories = 250
-  metrics.weightLossPercentage = 81
-  metrics.growthPercentage = 22
-  metrics.revenuePercentage = 62
+// Auth check
+const checkAuthStatus = () => {
+  const token = localStorage.getItem('accessToken')
+  return !!token
 }
 
-// 초기 데이터 로드
-handleDateRangeUpdate({ startDate: startDate.value, endDate: endDate.value })
+onMounted(async () => {
+  if (checkAuthStatus()) {
+    await fetchAllData()
+  }
+})
 </script>
