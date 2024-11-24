@@ -3,7 +3,7 @@
     <header class="mb-8 flex items-center justify-between">
       <div>
         <h1 class="font-paperlogy text-5xl font-bold text-gray-900">Dashboard</h1>
-        <p class="mt-1 text-sm text-gray-600">운동 중 데이터 통계</p>
+        <p class="mt-1 text-sm text-gray-600">운동 데이터 통계</p>
       </div>
       <div class="flex items-center gap-4">
         <DateRangePicker @update-date-range="handleDateRangeUpdate" />
@@ -11,15 +11,13 @@
     </header>
 
     <!-- 로딩/에러/데이터 표시 -->
-    <div v-if="loading" class="p-4 text-center">
-      데이터를 불러오는 중...
-    </div>
+    <div v-if="loading" class="p-4 text-center">데이터를 불러오는 중...</div>
 
-    <div v-else-if="error" class="p-4 bg-red-100 text-red-700 rounded">
+    <div v-else-if="error" class="rounded bg-red-100 p-4 text-red-700">
       {{ error }}
-      <button 
-        @click="retryFetch" 
-        class="ml-4 px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700"
+      <button
+        @click="retryFetch"
+        class="ml-4 rounded bg-red-600 px-3 py-1 text-white hover:bg-red-700"
       >
         다시 시도
       </button>
@@ -27,20 +25,20 @@
 
     <div class="grid grid-cols-3 gap-6">
       <!-- 각 데이터 타입별 MetricCard -->
-      <MetricCard 
+      <MetricCard
         key="exerciseTime"
         :records="recordsMap.exerciseTime"
-        title="⏱️운동 시간"
+        title="⏱️총 운동 시간"
         subtitle="분 단위"
       />
-      <MetricCard 
+      <MetricCard
         key="distance"
         :records="recordsMap.distance"
-        title="🚶‍♂️이동 거리"
+        title="🚶‍♂️총 이동 거리"
         subtitle="미터 단위"
       />
       <!--
-      <MetricCard 
+      <MetricCard
         key="cadence"
         :records="recordsMap.cadence"
         title="🚴‍♀️케이던스"
@@ -48,36 +46,19 @@
       />
       -->
       <!-- 목표 출력 -->
-      
+      <UserGoal :title="'🎯내 목표'" subtitle="참여 챌린지 목록" />
     </div>
 
-    <div class="grid grid-cols-2 gap-6 mt-6">
+    <div class="mt-6 grid grid-cols-2 gap-6">
       <!-- 각 데이터 타입별 LineChart -->
-      <LineChart 
-        key="heartRate"
-        :records="recordsMap.heartRate"
-        title="💓심박수"
-      />
-      <LineChart 
-        key="speed"
-        :records="recordsMap.speed"
-        title="💨속도"
-      />
-
+      <LineChart key="heartRate" :records="recordsMap.heartRate" title="💓심박수" />
+      <LineChart key="speed" :records="recordsMap.speed" title="💨속도" />
     </div>
 
-    <div class="grid grid-cols-2 gap-6 mt-6">
+    <div class="mt-6 grid grid-cols-2 gap-6">
       <!-- 각 데이터 타입별 BarChart -->
-      <BarChart 
-        key="step"
-        :records="recordsMap.step"
-        title="👣걸음 수"
-      />
-      <BarChart 
-        key="calorie"
-        :records="recordsMap.calorie"
-        title="🔥소비 칼로리"
-      />
+      <BarChart key="step" :records="recordsMap.step" title="👣걸음 수" />
+      <BarChart key="calorie" :records="recordsMap.calorie" title="🔥소비 칼로리" />
     </div>
   </div>
 </template>
@@ -90,6 +71,7 @@ import DateRangePicker from '@/components/user/dashboard/dateRangePicker.vue'
 import BarChart from '@/components/user/dashboard/barChart.vue'
 import LineChart from '@/components/user/dashboard/lineChart.vue'
 import MetricCard from '@/components/user/dashboard/metricCard.vue'
+import UserGoal from '@/components/user/dashboard/userGoal.vue'
 
 const userStore = useUserStore()
 const loading = ref(false)
@@ -105,7 +87,7 @@ const dataTypes = [
   { key: 'exerciseTime', label: '운동 시간', endpoint: 'record/exerciseTime' },
   { key: 'distance', label: '거리', endpoint: 'record/distance' },
   { key: 'calorie', label: '칼로리', endpoint: 'record/calorie' },
-  { key: 'cadence', label: '케이던스', endpoint: 'record/cadence' }
+  { key: 'cadence', label: '케이던스', endpoint: 'record/cadence' },
 ]
 
 // 각 데이터 타입별 records 저장
@@ -116,7 +98,7 @@ const recordsMap = ref({
   exerciseTime: [],
   distance: [],
   calorie: [],
-  cadence: []
+  cadence: [],
 })
 
 // 재사용 가능한 데이터 fetch 함수
@@ -131,14 +113,14 @@ const fetchData = async (dataType) => {
       params: {
         startTime: startDate.value,
         endTime: endDate.value,
-      }
+      },
     })
-    
+
     // 응답 데이터가 배열인지 확인하고 초기화
-    recordsMap.value[dataType.key] = Array.isArray(response.data) ? response.data : [];
-    
+    recordsMap.value[dataType.key] = Array.isArray(response.data) ? response.data : []
+
     console.log(`Fetched ${dataType.label} data:`, recordsMap.value[dataType.key])
-    
+
     if (!recordsMap.value[dataType.key].length) {
       console.log(`No ${dataType.label} data available for selected period`)
     }
@@ -147,7 +129,7 @@ const fetchData = async (dataType) => {
     error.value = `${dataType.label} 데이터 로딩 실패: ${
       err.response?.status === 401 ? '인증 오류' : err.message
     }`
-    recordsMap.value[dataType.key] = [] 
+    recordsMap.value[dataType.key] = []
   }
 }
 
@@ -157,7 +139,7 @@ const fetchAllData = async () => {
   error.value = null
 
   try {
-    await Promise.all(dataTypes.map(type => fetchData(type)))
+    await Promise.all(dataTypes.map((type) => fetchData(type)))
   } catch (err) {
     console.error('Failed to fetch all data:', err)
     error.value = '데이터 로딩 실패'
