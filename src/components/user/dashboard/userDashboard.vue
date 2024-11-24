@@ -1,15 +1,14 @@
 <template>
   <div>
-    <div class="mb-8 flex items-center justify-between">
+    <header class="mb-8 flex items-center justify-between">
       <div>
         <h1 class="font-paperlogy text-5xl font-bold text-gray-900">Dashboard</h1>
-        <p class="mt-1 text-sm text-gray-600">운동 중 걸음 수 데이터</p>
+        <p class="mt-1 text-sm text-gray-600">운동 중 데이터 통계</p>
       </div>
       <div class="flex items-center gap-4">
         <DateRangePicker @update-date-range="handleDateRangeUpdate" />
       </div>
-    </div>
-
+    </header>
 
     <!-- 로딩/에러/데이터 표시 -->
     <div v-if="loading" class="p-4 text-center">
@@ -25,53 +24,60 @@
         다시 시도
       </button>
     </div>
-    
-    <!-- 각 데이터 타입별 MetricCard -->
-    <div class="grid grid-cols-2 gap-6">
-      <MetricCard 
-      key="exerciseTime"
-      :records="recordsMap.exerciseTime"
-      title="운동시간"
-    />
-    </div>
-    <div class="grid grid-cols-2 gap-6">
-      <MetricCard 
-      key="distance"
-      :records="recordsMap.distance"
-      title="이동거리"
-    />
-    </div>
-    <div class="grid grid-cols-2 gap-6">
-      <MetricCard 
-      key="cadence"
-      :records="recordsMap.cadence"
-      title="케이던스"
-    />
-    </div>
-///////////////////////////////////////////////여기 수정해야함
 
-    <!-- 각 데이터 타입별 LineChart -->
-    <div class="grid grid-cols-2 gap-6">
+    <div class="grid grid-cols-3 gap-6">
+      <!-- 각 데이터 타입별 MetricCard -->
+      <MetricCard 
+        key="exerciseTime"
+        :records="recordsMap.exerciseTime"
+        title="⏱️운동 시간"
+        subtitle="분 단위"
+      />
+      <MetricCard 
+        key="distance"
+        :records="recordsMap.distance"
+        title="🚶‍♂️이동 거리"
+        subtitle="미터 단위"
+      />
+      <!--
+      <MetricCard 
+        key="cadence"
+        :records="recordsMap.cadence"
+        title="🚴‍♀️케이던스"
+        subtitle="분당 걸음 수"
+      />
+      -->
+      <!-- 목표 출력 -->
+      
+    </div>
+
+    <div class="grid grid-cols-2 gap-6 mt-6">
+      <!-- 각 데이터 타입별 LineChart -->
       <LineChart 
-      key="heartRate"
-      :records="recordsMap.heartRate"
-      title="심박수"
-    />
+        key="heartRate"
+        :records="recordsMap.heartRate"
+        title="💓심박수"
+      />
+      <LineChart 
+        key="speed"
+        :records="recordsMap.speed"
+        title="💨속도"
+      />
+
     </div>
-    <!-- 각 데이터 타입별 BarChart -->
-    <div class="grid grid-cols-2 gap-6">
+
+    <div class="grid grid-cols-2 gap-6 mt-6">
+      <!-- 각 데이터 타입별 BarChart -->
       <BarChart 
-      key="step"
-      :records="recordsMap.step"
-      title="걸음 수"
-    />
-    </div>
-    <div class="grid grid-cols-2 gap-6">
+        key="step"
+        :records="recordsMap.step"
+        title="👣걸음 수"
+      />
       <BarChart 
-      key="calorie"
-      :records="recordsMap.calorie"
-      title="칼로리"
-    />
+        key="calorie"
+        :records="recordsMap.calorie"
+        title="🔥소비 칼로리"
+      />
     </div>
   </div>
 </template>
