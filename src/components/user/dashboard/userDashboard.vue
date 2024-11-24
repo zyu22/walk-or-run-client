@@ -3,7 +3,7 @@
     <header class="mb-8 flex items-center justify-between">
       <div>
         <h1 class="font-paperlogy text-5xl font-bold text-gray-900">Dashboard</h1>
-        <p class="mt-1 text-sm text-gray-600">운동 중 데이터 통계</p>
+        <p class="mt-1 text-sm text-gray-600">운동 데이터 통계</p>
       </div>
       <div class="flex items-center gap-4">
         <DateRangePicker @update-date-range="handleDateRangeUpdate" />
@@ -30,13 +30,13 @@
       <MetricCard 
         key="exerciseTime"
         :records="recordsMap.exerciseTime"
-        title="⏱️운동 시간"
+        title="⏱️총 운동 시간"
         subtitle="분 단위"
       />
       <MetricCard 
         key="distance"
         :records="recordsMap.distance"
-        title="🚶‍♂️이동 거리"
+        title="🚶‍♂️총 이동 거리"
         subtitle="미터 단위"
       />
       <!--
@@ -48,6 +48,10 @@
       />
       -->
       <!-- 목표 출력 -->
+      <UserGoal
+      :title="'🎯내 목표'"
+      subtitle="참여 챌린지 목록"
+      />
       
     </div>
 
@@ -90,6 +94,7 @@ import DateRangePicker from '@/components/user/dashboard/dateRangePicker.vue'
 import BarChart from '@/components/user/dashboard/barChart.vue'
 import LineChart from '@/components/user/dashboard/lineChart.vue'
 import MetricCard from '@/components/user/dashboard/metricCard.vue'
+import UserGoal from '@/components/user/dashboard/UserGoal.vue'
 
 const userStore = useUserStore()
 const loading = ref(false)
