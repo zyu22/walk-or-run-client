@@ -29,14 +29,22 @@ const props = defineProps({
 const average = computed(() => {
   if (!props.records?.length) return 0;
 
-  const sum = props.records.reduce((acc, record) => {
-    if (record.value !== undefined) {
-      return acc + record.value;
-    } else {
-      return acc;
-    }
-  }, 0);
+  let sum = 0;
+  let count = 0;
 
-  return sum / props.records.length;
+  for (const record of props.records) {
+    if (record.timeInterval !== undefined) {
+      sum += record.timeInterval;
+      count++;
+    } else if (record.distance !== undefined) {
+      sum += record.distance;
+      count++;
+    } else if (record.cadence !== undefined) {
+      sum += record.cadence;
+      count++;
+    }
+  }
+
+  return sum;
 });
 </script>
