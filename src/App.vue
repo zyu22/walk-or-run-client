@@ -63,7 +63,6 @@ const checkLoginStatus = async () => {
     const accessToken = localStorage.getItem('accessToken')
 
     if (accessToken) {
-      console.log(accessToken)
       userStore.updateUserInfo(accessToken)
 
       // userRole에 따른 리다이렉트
@@ -78,8 +77,9 @@ const checkLoginStatus = async () => {
         }
       }
     } else {
-      // 토큰이 없고 현재 로그인 페이지가 아니면 로그인으로 리다이렉트
-      if (router.currentRoute.value.name !== 'login') {
+      // accessToken이 없을 때
+      const currentPath = router.currentRoute.value.path
+      if (currentPath.startsWith('/user') || currentPath.startsWith('/admin')) {
         router.push({ name: 'login' })
       }
     }

@@ -126,6 +126,11 @@ const routes = [
         name: 'adminScheduleChallenge',
         component: settingScheduleChallenge,
       },
+      {
+        path: 'user',
+        name: 'adminUser',
+        component: settingChallenge,
+      },
     ],
   },
   {
@@ -149,10 +154,19 @@ const router = createRouter({
 
 router.beforeEach((to, from, next) => {
   const accessToken = localStorage.getItem('accessToken')
-  const userStore = useUserStore() // store import 필요
+  const userStore = useUserStore()
+
+  // 이미 로그인 한 사용자가 auth 페이지 접근 시도할 경우
+  if (accessToken && to.matched.some((record) => record.name === 'auth')) {
+    if (userStore.userRole === 'USER') {
+      next({ name: 'userDashboard ' })
+    } else if (userStore.userRole === 'ADMIN') {
+      next({ name: 'adminDashboard' })
+    }
+  }
 
   // 로그인이 필요한 페이지 접근 제어
-  if (!accessToken && to.name !== 'login') {
+  if (!accessToken && to.path.startsWith('/user')) {
     next({ name: 'login' })
     return
   }
