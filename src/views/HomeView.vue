@@ -5,7 +5,7 @@
     <div class="mb-8 flex items-center justify-between">
       <!-- 좌측 타이틀 -->
       <div>
-        <h1 class="text-5xl font-bold text-gray-900">Dashboard</h1>
+        <h1 class="font-paperlogy text-5xl font-bold text-gray-900">Dashboard</h1>
         <p class="mt-1 text-sm text-gray-600">오늘의 활동을 확인하세요</p>
       </div>
 
@@ -44,12 +44,11 @@
 
 <script setup>
 import { ref, reactive } from 'vue'
-import SideBar from '../components/user/userSidebar.vue'
-import MetricCard from '../components/user/dashboard/metricCard.vue'
-import DonutChart from '../components/user/dashboard/donutChart.vue'
-import LineChart from '../components/user/dashboard/lineChart.vue'
-import BarChart from '../components/user/dashboard/barChart.vue'
-import DateRangePicker from '../components/user/dashboard/dateRangePicker.vue'
+import MetricCard from '@/components/user/dashboard/metricCard.vue'
+import DonutChart from '@/components/user/dashboard/donutChart.vue'
+import LineChart from '@/components/user/dashboard/lineChart.vue'
+import BarChart from '@/components/user/dashboard/barChart.vue'
+import DateRangePicker from '@/components/user/dashboard/dateRangePicker.vue'
 
 const startDate = ref(new Date().toISOString().split('T')[0])
 const endDate = ref(new Date().toISOString().split('T')[0])

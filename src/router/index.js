@@ -126,6 +126,11 @@ const routes = [
         name: 'adminScheduleChallenge',
         component: settingScheduleChallenge,
       },
+      {
+        path: 'user',
+        name: 'adminUser',
+        component: settingChallenge,
+      },
     ],
   },
   {
