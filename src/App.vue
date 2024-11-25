@@ -29,10 +29,10 @@
 import { computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
-import api from './api/axios'
-import Login from './views/AuthenticationView.vue'
-import Sidebar from './components/user/userSidebar.vue'
-import AdminSidebar from './components/admin/adminSidebar.vue'
+import api from '@/api/axios'
+import Login from '@/views/AuthenticationView.vue'
+import Sidebar from '@/components/user/userSidebar.vue'
+import AdminSidebar from '@/components/admin/adminSidebar.vue'
 import Footer from '@/components/footer.vue'
 
 const router = useRouter()
@@ -62,6 +62,7 @@ const checkLoginStatus = async () => {
     // login.vue에서 access_token을 accessToken으로 저장함
     const accessToken = localStorage.getItem('accessToken')
 
+    console.log('accessToken: ', accessToken)
     if (accessToken) {
       userStore.updateUserInfo(accessToken)
 
@@ -79,7 +80,7 @@ const checkLoginStatus = async () => {
     } else {
       // accessToken이 없을 때
       const currentPath = router.currentRoute.value.path
-      if (currentPath.startsWith('/user') || currentPath.startsWith('/admin')) {
+      if (currentPath === '/' || currentPath.startsWith('/user') || currentPath.startsWith('/admin')) {
         router.push({ name: 'login' })
       }
     }
