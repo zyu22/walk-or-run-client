@@ -1,8 +1,14 @@
 <template>
-  <div class="flex h-full w-full items-center justify-center">
-    <div class="mx-auto w-2/5 p-6">
-      <h1 class="mb-8 font-paperlogy text-4xl">내 비밀번호 관리</h1>
 
+  
+  <header class="mb-8 flex items-center justify-between">
+        <div>
+          <h1 class="font-paperlogy text-5xl font-bold text-gray-900">내 비밀번호 관리</h1>
+          <p class="mt-2 text-sm text-gray-600">내 비밀번호를 수정할 수 있어요!</p>
+        </div>
+      </header>
+  <div class="bg-white rounded-lg shadow-lg p-6 py-5">
+    <div class="mx-auto w-2/5 p-6">
       <form @submit.prevent="updatePassword" class="space-y-6">
         <input type="text" autocomplete="username" style="display: none" />
         <div class="grid grid-cols-1 gap-6">
