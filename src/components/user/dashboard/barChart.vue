@@ -1,10 +1,10 @@
 ```vue
 <template>
-  <div class="bg-white rounded-lg shadow p-6">
+  <div class="bg-white rounded-lg shadow-lg p-6">
     <div class="flex justify-between items-center mb-4">
       <h3 class="text-lg font-semibold text-gray-700">{{ title }}</h3>
       <div class="flex gap-2">
-        <button 
+        <!-- <button 
           v-for="period in timePeriods" 
           :key="period"
           @click="selectedPeriod = period"
@@ -16,7 +16,7 @@
           ]"
         >
           {{ period }}
-        </button>
+        </button> -->
       </div>
     </div>
 
@@ -67,7 +67,7 @@ const props = defineProps({
 })
 
 const timePeriods = ['Day', 'Week', 'Month']
-const selectedPeriod = ref('Day')
+const selectedPeriod = ref('Week')
 
 // 데이터 처리 함수
 const processData = (records) => {
