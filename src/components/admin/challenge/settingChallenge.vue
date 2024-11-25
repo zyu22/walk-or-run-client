@@ -1,13 +1,13 @@
 <template>
-  <div class="rounded-xl bg-white p-6 shadow-sm">
+  <div class="modal-container rounded-xl bg-white p-6 shadow-sm">
     <div class="mb-10 flex items-center justify-between">
       <div>
         <h2 class="font-paperlogy text-5xl font-bold text-gray-900">챌린지 현황</h2>
         <p class="mt-1 text-sm text-gray-600">전체 챌린지 관리</p>
       </div>
       <button
-        @click="openAddModal"
-        class="rounded-lg bg-[#ff6f3b] px-4 py-2 text-white transition-colors hover:bg-[#ff5c2e]"
+        @click="openAddmodal"
+        class="rounded-lg bg-[black] px-4 py-2 text-white transition-colors hover:bg-opacity-70"
       >
         챌린지 추가
       </button>
@@ -72,6 +72,11 @@
             <th
               class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500"
             >
+              카테고리
+            </th>
+            <th
+              class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500"
+            >
               제목
             </th>
             <th
@@ -97,25 +102,51 @@
           </tr>
         </thead>
         <tbody class="divide-y divide-gray-200 bg-white">
-          <tr v-for="challenge in filteredChallenges" :key="challenge.challengeId">
+          <tr
+            v-for="challenge in filteredChallenges"
+            :key="challenge.challengeId"
+            :class="[
+              'group transition-colors',
+              challenge.dday === '종료' ? 'is-ended bg-gray-50' : 'bg-white',
+            ]"
+          >
+            <!-- 유형 -->
             <td class="whitespace-nowrap px-6 py-4">
               <span
-                class="inline-flex rounded-full px-3 py-1 text-xs font-semibold"
+                class="inline-flex rounded-full px-3 py-1 text-xs font-semibold transition-colors group-[.is-ended]:bg-gray-100 group-[.is-ended]:text-gray-500"
                 :class="getChallengeTypeColor(getChallengeType(challenge))"
               >
                 {{ getChallengeType(challenge) }}
               </span>
             </td>
-            <td class="px-6 py-4">{{ challenge.challengeTitle }}</td>
+
+            <!-- 카테고리 -->
             <td class="whitespace-nowrap px-6 py-4">
+              <span
+                class="inline-flex rounded-full px-3 py-1 text-xs font-semibold transition-colors group-[.is-ended]:bg-gray-100 group-[.is-ended]:text-gray-500"
+                :class="getCategoryColor(challenge.challengeCategoryCode)"
+              >
+                {{ getCategoryName(challenge.challengeCategoryCode) }}
+              </span>
+            </td>
+
+            <!-- 제목 -->
+            <td class="px-6 py-4 text-gray-900 group-[.is-ended]:text-gray-500">
+              {{ challenge.challengeTitle }}
+            </td>
+
+            <!-- 기간 -->
+            <td class="whitespace-nowrap px-6 py-4 text-gray-900 group-[.is-ended]:text-gray-500">
               {{ formatDate(challenge.challengeCreateDate) }} ~
               {{ formatDate(challenge.challengeDeleteDate) }}
             </td>
+
+            <!-- 참여율 -->
             <td class="px-6 py-4">
               <div class="flex items-center">
                 <div class="w-24 rounded-full bg-gray-100">
                   <div
-                    class="h-2 rounded-full transition-all"
+                    class="h-2 rounded-full transition-all group-[.is-ended]:bg-gray-300"
                     :class="{
                       'bg-red-500': getParticipationRate(challenge) < 30,
                       'bg-yellow-500':
@@ -124,14 +155,11 @@
                       'bg-[#ff6f3b]': getParticipationRate(challenge) >= 70,
                     }"
                     :style="{
-                      width: `${Math.min(
-                        (challenge.challengeParticipantCnt / challenge.challengeTargetCnt) * 100,
-                        100,
-                      ).toFixed(1)}%`,
+                      width: `${Math.min((challenge.challengeParticipantCnt / challenge.challengeTargetCnt) * 100, 100).toFixed(1)}%`,
                     }"
                   ></div>
                 </div>
-                <span class="ml-2 text-sm text-gray-600">
+                <span class="ml-2 text-sm text-gray-600 group-[.is-ended]:text-gray-500">
                   {{ getParticipationRate(challenge) }}%
                 </span>
               </div>
@@ -142,15 +170,26 @@
                 :class="
                   challenge.dday === '종료'
                     ? 'bg-gray-100 text-gray-800'
-                    : 'bg-green-100 text-green-800'
+                    : 'bg-gray-100 text-green-600'
                 "
               >
                 {{ challenge.dday === '종료' ? '종료' : '진행중' }}
               </span>
             </td>
+            <!-- 관리 -->
             <td class="whitespace-nowrap px-6 py-4 text-sm">
-              <button class="mr-2 text-[#00B074] hover:text-[#009563]">수정</button>
-              <button class="text-red-600 hover:text-red-900">삭제</button>
+              <button
+                class="mr-2 text-[#00B074] hover:text-[#009563] group-[.is-ended]:text-gray-400"
+                :disabled="challenge.dday === '종료'"
+              >
+                수정
+              </button>
+              <button
+                class="text-red-600 hover:text-red-900 group-[.is-ended]:text-gray-400"
+                :disabled="challenge.dday === '종료'"
+              >
+                삭제
+              </button>
             </td>
           </tr>
         </tbody>
@@ -173,7 +212,7 @@
 
   <!-- 챌린지 추가 모달 -->
   <ChallengeAddModal
-    :is-open="isAddModalOpen"
+    :is-open="isAddModelOpen"
     @close="closeAddModal"
     @refresh="refreshChallenges"
   />
@@ -182,7 +221,7 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import api from '@/api/axios'
-import addChallenge from '@/components/admin/challenge/addChallenge.vue'
+import ChallengeAddModal from '@/components/admin/challenge/addChallenge.vue'
 
 const challenges = ref([])
 const isLoading = ref(false)
@@ -205,7 +244,7 @@ const openAddmodal = () => {
   isAddModelOpen.value = true
 }
 
-const clasAddModal = () => {
+const closeAddModal = () => {
   isAddModelOpen.value = false
 }
 
@@ -290,12 +329,31 @@ const getChallengeType = (challenge) => {
 // 타입별 색상 클래스
 const getChallengeTypeColor = (type) => {
   const colors = {
-    일일: 'bg-orange-100 text-orange-600',
-    주간: 'bg-green-100 text-green-600',
-    월간: 'bg-blue-100 text-blue-600',
-    이벤트: 'bg-purple-100 text-purple-600',
+    일일: 'bg-[gray]/10 text-orange-600',
+    주간: 'bg-[gray]/10 text-green-600',
+    월간: 'bg-[gray]/10 text-blue-600',
+    이벤트: 'bg-[gray]/10 text-purple-600',
   }
   return colors[type] || 'bg-gray-100 text-gray-600'
+}
+
+// 카테고리 색상
+const getCategoryColor = (categoryCode) => {
+  console.log(categoryCode)
+  const colors = {
+    1: 'bg-[gray]/10 text-[#ff6f3b]',
+    2: 'bg-[gray]/10 text-[#00B074]',
+  }
+  return colors[categoryCode] || 'bg-gray-100 text-gray-600'
+}
+
+// 카테고리 코드를 한글 이름으로 변환
+const getCategoryName = (categoryCode) => {
+  const names = {
+    1: '뛰거나',
+    2: '걷거나',
+  }
+  return names[categoryCode] || '기타'
 }
 
 // 참여율 계산
@@ -317,3 +375,43 @@ onMounted(() => {
   getChallenge(1)
 })
 </script>
+
+<style scoped>
+.modal-container {
+  max-height: 90vh;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+}
+
+.modal-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.modal-container::-webkit-scrollbar-track {
+  background: transparent;
+  margin: 4px;
+}
+
+.modal-container::-webkit-scrollbar-thumb {
+  background: rgba(203, 213, 225, 0.5);
+  border-radius: 100px;
+  transition: all 0.2s ease-in-out;
+}
+
+.modal-container::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.8);
+}
+
+.modal-container::-webkit-scrollbar-thumb:active {
+  background: rgba(255, 111, 59, 1);
+}
+
+.modal-container::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+.modal-container {
+  scrollbar-gutter: stable;
+  scroll-behavior: smooth;
+}
+</style>
