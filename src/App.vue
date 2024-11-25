@@ -32,7 +32,7 @@ import { useUserStore } from '@/stores/user'
 import api from '@/api/axios'
 import Login from '@/views/AuthenticationView.vue'
 import Sidebar from '@/components/user/userSidebar.vue'
-import AdminSidebar from '@/components/admin/adminSidebar.vue'
+import AdminSidebar from '@/components/admin/AdminSideBar.vue'
 import Footer from '@/components/footer.vue'
 
 const router = useRouter()
