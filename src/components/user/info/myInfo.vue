@@ -2,7 +2,7 @@
 <template>
   <div class="flex h-full w-full items-center justify-center">
     <div class="mx-auto w-2/5 p-8">
-      <h1 class="mb-8 font-paperlogy text-2xl">내 정보 관리</h1>
+      <h1 class="mb-8 font-paperlogy text-4xl">내 정보 관리</h1>
 
       <form @submit.prevent="updateUserInfo" class="w-full space-y-6">
         <div class="grid grid-cols-1 gap-8">

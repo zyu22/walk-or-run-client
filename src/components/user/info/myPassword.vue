@@ -1,7 +1,7 @@
 <template>
   <div class="flex h-full w-full items-center justify-center">
     <div class="mx-auto w-2/5 p-6">
-      <h1 class="mb-8 font-paperlogy text-2xl">내 비밀번호 관리</h1>
+      <h1 class="mb-8 font-paperlogy text-4xl">내 비밀번호 관리</h1>
 
       <form @submit.prevent="updatePassword" class="space-y-6">
         <input type="text" autocomplete="username" style="display: none" />

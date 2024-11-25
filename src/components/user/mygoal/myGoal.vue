@@ -2,7 +2,7 @@
 <template>
   <div class="flex h-full w-full items-center justify-center">
     <div class="mx-auto w-2/5 p-6">
-      <h1 class="font-paperlogy mb-8 text-2xl">내 목표 관리</h1>
+      <h1 class="mb-8 font-paperlogy text-4xl">내 목표 관리</h1>
 
       <form @submit.prevent="handleSubmit" class="space-y-6">
         <!-- 챌린지 필드 -->

@@ -1,5 +1,14 @@
 <template>
   <div>
+<<<<<<< HEAD
+    <header class="mb-8 flex items-center justify-between">
+      <div>
+        <h1 class="font-paperlogy text-5xl font-bold text-gray-900">Dashboard</h1>
+        <p class="mt-2 text-sm text-gray-600">운동 데이터 통계</p>
+      </div>
+      <div class="flex items-center gap-4">
+        <DateRangePicker @update-date-range="handleDateRangeUpdate" />
+=======
     <header class="mb-8">
       <div class="flex items-center justify-between">
         <div>
@@ -11,6 +20,7 @@
         <div class="flex items-center gap-4">
           <DateRangePicker @update-date-range="handleDateRangeUpdate" />
         </div>
+>>>>>>> 2cfed3f74640dd1c286e2b3521f97a286ca327c6
       </div>
     </header>
 
