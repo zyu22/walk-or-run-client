@@ -2,6 +2,7 @@
   <!-- 헤더 -->
   <div class="mb-8">
     <h1 class="font-paperlogy text-5xl font-bold text-gray-900">Challenge</h1>
+    <p class="mt-2 text-sm text-gray-600">나의 한계를 도전해보세요!</p>
   </div>
   <div class="mb-8 flex items-center justify-between">
     <!-- 상태 필터 -->
