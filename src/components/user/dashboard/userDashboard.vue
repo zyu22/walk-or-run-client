@@ -29,13 +29,13 @@
         key="exerciseTime"
         :records="recordsMap.exerciseTime"
         title="⏱️총 운동 시간"
-        subtitle="분 단위"
+        subtitle="시간"
       />
       <MetricCard
         key="distance"
         :records="recordsMap.distance"
         title="🚶‍♂️총 이동 거리"
-        subtitle="미터 단위"
+        subtitle="km"
       />
       <!--
       <MetricCard

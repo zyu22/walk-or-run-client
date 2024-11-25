@@ -3,24 +3,21 @@
     <div class="flex items-center justify-between">
       <div>
         <h3 class="text-lg font-semibold text-gray-700">{{ title }}</h3>
-        <p class="text-sm text-gray-500 mt-1">
-          <span v-if="challenges.length > 0">1. {{ challenges[0].challengeTitle }}</span>
-          <span v-else>1. --</span>
-        </p>
-        <p class="text-sm text-gray-500 mt-1">
-          <span v-if="challenges.length > 1">2. {{ challenges[1].challengeTitle }}</span>
-          
-        </p>
-        <p class="text-sm text-gray-500 mt-1">
-          <span v-if="challenges.length > 2">3. {{ challenges[2].challengeTitle }}</span>
-          
-        </p>
+        
+        <!-- content 배열 내의 challengeTitle만 출력 -->
+        <div v-if="challenges.content && challenges.content.length > 0">
+          <p v-for="(challenge, index) in challenges.content" 
+             :key="challenge.challengeId" 
+             class="text-sm text-gray-500 mt-1">
+            {{ index + 1 }}. {{ challenge.challengeTitle }}
+          </p>
+        </div>
+        
+        <!-- 데이터가 없을 경우 표시 -->
+        <div v-else>
+          <p class="text-sm text-gray-500 mt-1">데이터가 없습니다.</p>
+        </div>
       </div>
-      <!--
-      <div class="text-green-500 text-2xl">
-        {{ icon }}
-      </div>
-      -->
     </div>
   </div>
 </template>
@@ -42,8 +39,7 @@ const props = defineProps({
 })
 
 const userStore = useUserStore()
-
-const challenges = ref([])
+const challenges = ref({ content: [] }) // 초기값을 객체 형태로 설정
 const icon = '🎯'
 
 onMounted(async () => {
@@ -62,13 +58,13 @@ const fetchChallenges = async () => {
       }
     })
 
+    // response.data를 그대로 할당
     challenges.value = response.data
-
     console.log("챌린지 출력: ", challenges.value)
 
   } catch (error) {
     console.error('Error fetching user challenges:', error)
-    challenges.value = []
+    challenges.value = { content: [] }
   }
 }
 
