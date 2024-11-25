@@ -1,13 +1,11 @@
 <template>
-
-  
   <header class="mb-8 flex items-center justify-between">
-        <div>
-          <h1 class="font-paperlogy text-5xl font-bold text-gray-900">내 비밀번호 관리</h1>
-          <p class="mt-2 text-sm text-gray-600">내 비밀번호를 수정할 수 있어요!</p>
-        </div>
-      </header>
-  <div class="bg-white rounded-lg shadow-lg p-6 py-5">
+    <div>
+      <h1 class="font-paperlogy text-5xl font-bold text-gray-900">내 비밀번호 관리</h1>
+      <p class="mt-2 text-sm text-gray-600">내 비밀번호를 수정할 수 있어요!</p>
+    </div>
+  </header>
+  <div class="rounded-lg bg-white p-6 py-5 shadow-lg">
     <div class="mx-auto w-2/5 p-6">
       <form @submit.prevent="updatePassword" class="space-y-6">
         <input type="text" autocomplete="username" style="display: none" />
@@ -96,6 +94,9 @@ import { reactive, ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import api from '@/api/axios'
+import { useAlertStore } from '@/stores/alert'
+
+const alertStore = useAlertStore()
 const userStore = useUserStore()
 const router = useRouter()
 const passwordQuetions = ref([])
@@ -127,21 +128,41 @@ const updatePassword = async () => {
   try {
     // 비밀번호 유효성 검사
     if (!passwordInfo.currentPassword) {
-      alert('현재 비밀번호를 입력해주세요.')
+      alertStore.showNotify({
+        title: '알림',
+        message: '현재 비밀번호를 입력해주세요.',
+        type: 'error',
+        position: 'center',
+      })
       return
     }
 
     if (!passwordInfo.newPassword) {
-      alert('변경할 비밀번호를 입력해주세요.')
+      alertStore.showNotify({
+        title: '알림',
+        message: '변경할 비밀번호를 입력해주세요.',
+        type: 'error',
+        position: 'center',
+      })
       return
     }
     if (passwordInfo.newPassword !== passwordInfo.confirmPassword) {
-      alert('새 비밀번호가 일치하지 않습니다.')
+      alertStore.showNotify({
+        title: '알림',
+        message: '새 비밀번호가 일치하지 않습니다.',
+        type: 'error',
+        position: 'center',
+      })
       return
     }
 
-    if (!passwordInfo.securityAnswer) {
-      alert('보안 질문의 답변을 입력해주세요.')
+    if (!passwordInfo.passwordQuestionAnswer) {
+      alertStore.showNotify({
+        title: '알림',
+        message: '보안 질문의 답변을 입력해주세요.',
+        type: 'error',
+        position: 'center',
+      })
       return
     }
 
@@ -165,22 +186,47 @@ const updatePassword = async () => {
     )
 
     if (response.status === 200) {
-      alert('비밀번호가 성공적으로 변경되었습니다.')
+      alertStore.showNotify({
+        title: '알림',
+        message: '비밀번호가 성공적으로 변경되었습니다',
+        type: 'success',
+        position: 'top-right',
+      })
       router.back()
     } else {
+      alertStore.showNotify({
+        title: '알림',
+        message: '비밀번호 변경에 실패하였습니다.',
+        type: 'error',
+        position: 'top-right',
+      })
       throw new Error('비밀번호 변경 실패')
     }
   } catch (error) {
     console.error('비밀번호 업데이트 실패:', error)
     if (error.response) {
-      // 서버에서 응답을 받았지만 2xx 범위를 벗어난 상태 코드가 반환된 경우
-      alert('비밀번호 변경에 실패하였습니다. 현재 비밀번호 및 질문과 답변을 확인해주세요.')
+      alertStore.showNotify({
+        title: '알림',
+        message: '비밀번호 변경에 실패하였습니다. \n현재 비밀번호 및 질문과 답변을 확인해주세요.',
+        type: 'error',
+        position: 'center',
+      })
     } else if (error.request) {
       // 요청이 이루어졌으나 응답을 받지 못한 경우
-      alert('서버와의 통신에 실패했습니다. 네트워크 연결을 확인해주세요.')
+      alertStore.showNotify({
+        title: '알림',
+        message: '서버와의 통신에 실패했습니다. \n네트워크 연결을 확인해주세요.',
+        type: 'error',
+        position: 'top-right',
+      })
     } else {
       // 요청을 설정하는 중에 문제가 발생한 경우
-      alert('비밀번호 변경 요청 중 오류가 발생했습니다.')
+      alertStore.showNotify({
+        title: '알림',
+        message: '비밀번호 변경 요청 중 오류가 발생했습니다.',
+        type: 'error',
+        position: 'top-right',
+      })
     }
   }
 }

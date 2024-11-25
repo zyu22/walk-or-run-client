@@ -76,8 +76,8 @@
           <div>
             <label class="mb-2 block text-sm font-medium text-gray-700">시작일</label>
             <Calendar
-              v-model="challengeForm.challengeCreateDate"
-              :end-date="challengeForm.challengeDeleteDate"
+              v-model="selectedCreateDate"
+              :end-date="selectedDeleteDate"
               :is-start-date="true"
               placeholder="시작일 선택"
               class="w-full rounded-lg border border-gray-300 p-3 focus:border-[#ff6f3b] focus:outline-none focus:ring-1"
@@ -89,6 +89,9 @@
               :is-start-date="true"
               class="w-full rounded-lg border border-gray-300 p-3 focus:border-[#ff6f3b] focus:outline-none focus:ring-1"
             /> -->
+            <p class="mt-1 text-xs text-gray-500">
+              미입력 시 현재 날짜의 00:00으로 자동 설정됩니다
+            </p>
           </div>
           <div>
             <label class="mb-2 block text-sm font-medium text-gray-700">종료일</label>
@@ -98,8 +101,8 @@
               class="w-full rounded-lg border border-gray-300 p-3 focus:border-[#ff6f3b] focus:outline-none focus:ring-1"
             /> -->
             <Calendar
-              v-model="challengeForm.challengeDeleteDate"
-              :start-date="challengeForm.challengeCreateDate"
+              v-model="selectedDeleteDate"
+              :start-date="selectedCreateDate"
               :is-end-date="true"
               placeholder="종료일 선택"
             />
@@ -140,6 +143,26 @@ const props = defineProps({
   },
 })
 
+// 시작일이 변경될 때마다 challengeForm 업데이트
+watch(selectedCreateDate, (newDate) => {
+  if (newDate) {
+    challengeForm.value.challengeCreateDate = `${newDate} 00:00:00`
+    console.log('시작일:', challengeForm.value.challengeCreateDate) // 2024-11-25 00:00:00
+  } else {
+    challengeForm.value.challengeCreateDate = ''
+  }
+})
+
+// 종료일이 변경될 때마다 challengeForm 업데이트
+watch(selectedDeleteDate, (newDate) => {
+  if (newDate) {
+    challengeForm.value.challengeDeleteDate = `${newDate} 23:59:59`
+    console.log('종료일:', challengeForm.value.challengeDeleteDate) // 2024-11-25 23:59:59
+  } else {
+    challengeForm.value.challengeDeleteDate = ''
+  }
+})
+
 const emit = defineEmits(['close', 'refresh'])
 const userStore = useUserStore()
 const isSubmitting = ref(false)
@@ -157,62 +180,47 @@ const challengeForm = ref({
 
 // API 호출 시
 const createChallenge = async () => {
-  const { isValid, message } = validateDates(
-    challengeForm.value.challengeCreateDate,
-    challengeForm.value.challengeDeleteDate,
-  )
-
   // 필수 필드 검증
-  if (!isValid) {
-    alertStore.showNotify({
-      title: '알림',
-      message,
-      type: 'error',
-      position: 'center',
-    })
-    return
-  }
   if (!challengeForm.value.challengeCategoryCode) {
-    alertStore.showNotify({
-      title: '알림',
-      message: '카테고리를 선택해주세요.',
-      type: 'error',
-      position: 'center',
-    })
+    alert('카테고리를 선택해주세요.')
     return
   }
   if (!challengeForm.value.challengeTitle) {
-    alertStore.showNotify({
-      title: '알림',
-      message: '챌린지 제목을 입력해주세요.',
-      type: 'error',
-      position: 'center',
-    })
+    alert('챌린지 제목을 입력해주세요.')
     return
   }
   if (!challengeForm.value.challengeDescription) {
-    alertStore.showNotify({
-      title: '알림',
-      message: '챌린지 내용을 입력해주세요.',
-      type: 'error',
-      position: 'center',
-    })
+    alert('챌린지 내용을 입력해주세요.')
     return
   }
   if (!challengeForm.value.challengeTargetCnt) {
-    alertStore.showNotify({
-      title: '알림',
-      message: '목표 인원을 입력해주세요.',
-      type: 'error',
-      position: 'center',
-    })
+    alert('목표 인원을 입력해주세요.')
+    return
+  }
+  if (!challengeForm.value.challengeDeleteDate) {
+    alert('종료일을 입력해주세요.')
     return
   }
 
   try {
-    // 시작일과 종료일 포맷팅
-    challengeForm.value.challengeCreateDate = `${goalInfo.startDate} 00:00:00`
-    challengeForm.value.challengeDeleteDate = `${goalInfo.endDate} 23:59:59`
+    const today = new Date()
+    const formattedDate = today.toISOString().split('T')[0] // YYYY-MM-DD
+
+    // 시작일이 선택되지 않은 경우 현재 날짜로 설정
+    if (!challengeForm.value.challengeCreateDate) {
+      challengeForm.value.challengeCreateDate = `${formattedDate} 00:00:00`
+    }
+
+    // 종료일 날짜 포맷팅 (YYYY-MM-DD 23:59:59)
+    const deleteDate = new Date(challengeForm.value.challengeDeleteDate)
+    const formattedDeleteDate = deleteDate.toISOString().split('T')[0]
+    challengeForm.value.challengeDeleteDate = `${formattedDeleteDate} 23:59:59`
+
+    // 종료일이 현재보다 과거인지 확인
+    if (deleteDate < today) {
+      alert('종료일은 현재 시간보다 미래여야 합니다.')
+      return
+    }
 
     // API 요청을 위한 데이터 정제
     const requestData = {
