@@ -94,7 +94,7 @@
 import { ref, onMounted } from 'vue'
 import { useUserStore } from '@/stores/user'
 import api from '@/api/axios'
-import GoalFormModal from '@/components/user/mygoal/GoalFormModal.vue'
+import GoalFormModal from '@/components/user/mygoal/goalFormModal.vue'
 import myGoalDetail from '@/components/user/mygoal/myGoalDetail.vue'
 
 const userStore = useUserStore()
