@@ -128,14 +128,23 @@
     </button>
   </div>
 
+  
   <!-- 챌린지 상세 모달 -->
-  <ChallengeDetailModal
-    v-if="selectedChallenge"
-    :challenge="selectedChallenge"
-    :challengeDetail="challengeDetail"
-    :isLoading="isModalLoading"
-    @close="closeModal"
-  />
+<ChallengeDetailModal
+  v-if="selectedChallenge && !isModalLoading"
+  :challenge="selectedChallenge"
+  :challengeDetail="challengeDetail || {}"
+  :initialComments="comments || []"
+  :initialCommentPageInfo="commentPageInfo || {
+    currentPage: 1,
+    pageSize: 10,
+    totalElements: 0,
+    totalPages: 0
+  }"
+  :isLoading="isModalLoading"
+  :challengeId="selectedChallenge.challengeId"
+  @close="closeModal"
+/>
 </template>
 
 <script setup>
@@ -150,6 +159,8 @@ const challengeStatus = ['전체', '진행중인 챌린지', '종료된 챌린�
 const filterStatus = ref('전체')
 const filterType = ref('전체')
 const currentPage = ref(1)
+const comments = ref([])
+const isCommentsLoading = ref(false)
 const selectedChallenge = ref(null)
 const challengeDetail = ref(null) // 챌린지 상세 정보 저장
 const isModalLoading = ref(false) // 모달 로딩 상태
@@ -161,6 +172,12 @@ const pageInfo = ref({
   pageSize: 16,
   totalElements: 0,
   totalPages: 0,
+})
+const commentPageInfo = ref({
+  currentPage: 1,
+  pageSize: 10,
+  totalElements: 0,
+  totalPages: 0
 })
 
 // 필터 상태 변경 처리 함수
@@ -228,22 +245,55 @@ const getChallege = async (page = 1) => {
   }
 }
 
-// 챌린지 상세 정보 가져오기
+// getChallengeDetail 함수도 수정
 const getChallengeDetail = async (challengeId) => {
-  isModalLoading.value = true
+  console.log('상세 정보 요청:', challengeId) // 디버깅 로그 추가
   try {
     const response = await api.get(`/challenge/${challengeId}`, {
       params: {
         userId: userStore.userId,
       },
     })
-    console.log('상세보기: ', response)
-    challengeDetail.value = response.data
+    console.log('상세보기 응답:', response) // 디버깅 로그 추가
+    challengeDetail.value = response.data || {}
+    return response.data
   } catch (err) {
-    console.error('챌린지 상세 정보를 불러오는 데 실패했습니다:', err)
-    alert('챌린지 상세 정보를 불러오는 데 실패했습니다.')
-  } finally {
-    isModalLoading.value = false
+    console.error('챌린지 상세 정보 에러:', err)
+    console.error('에러 응답:', err.response) // 에러 응답 상세 확인
+    challengeDetail.value = null
+    throw err  // 에러를 상위로 전파
+  }
+}
+
+// getComments 함수도 수정
+const getComments = async (challengeId, page = 1) => {
+  console.log('댓글 요청:', challengeId, page) // 디버깅 로그 추가
+  console.log('사이즈:', commentPageInfo.value.pageSize)
+  try {
+    const response = await api.get(`/challenge/${challengeId}/comment`, {
+      params: {
+        page: page,
+        size: commentPageInfo.value.pageSize
+      }
+    })
+    
+    if(response.status === 204) {
+
+    } else if(response.status === 200) {
+      comments.value = response.data.content
+      commentPageInfo.value = response.data.pageInfo || {
+        currentPage: 1,
+        pageSize: 10,
+        totalElements: 0,
+        totalPages: 0
+      }
+    }
+    return response.data
+  } catch (err) {
+    console.error('댓글 로딩 에러:', err)
+    console.error('에러 응답:', err.response) // 에러 응답 상세 확인
+    comments.value = []
+    throw err  // 에러를 상위로 전파
   }
 }
 
@@ -276,13 +326,38 @@ const getChallengeTypeColor = (type) => {
 }
 
 const openChallengeModal = async (challenge) => {
-  console.log('open model: ', challenge)
-  selectedChallenge.value = challenge // 기본 정보 먼저 설정
-  await getChallengeDetail(challenge.challengeId) // 상세 정보 가져오기
-  // 여기서 모달을 연다
+  console.log('모달 열기 시도:', challenge) // 디버깅 로그 추가
+  
+  if (!challenge?.challengeId) {
+    console.error('유효하지 않은 챌린지:', challenge)
+    return
+  }
+
+  selectedChallenge.value = challenge
+  
+  try {
+    isModalLoading.value = true
+    console.log('API 호출 시작') // 디버깅 로그 추가
+    
+    const detailPromise = getChallengeDetail(challenge.challengeId)
+    const commentsPromise = getComments(challenge.challengeId)
+    
+    const [detailResponse, commentsResponse] = await Promise.all([
+      detailPromise,
+      commentsPromise
+    ])
+    
+  } catch (error) {
+    console.error('모달 데이터 로딩 중 오류:', error)
+    // 에러 발생 시에도 사용자에게 알림
+    alert('데이터를 불러오는데 실패했습니다.')
+  } finally {
+    isModalLoading.value = false
+  }
 }
 
 const closeModal = () => {
   selectedChallenge.value = null
+  comments.value = null
 }
 </script>

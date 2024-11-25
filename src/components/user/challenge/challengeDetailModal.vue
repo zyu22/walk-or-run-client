@@ -86,7 +86,7 @@
               :class="{
                 'cursor-pointer bg-[#ff6f3b] hover:bg-[#ff5722]':
                   challengeDetail.dday !== '종료' && challengeDetail.challengeIsParticipant === 0,
-                'cursor-not-allowed bg-gray-400':
+                'cursor-pointer bg-gray-400':
                   challengeDetail.dday === '종료' || challengeDetail.challengeIsParticipant === 1,
               }"
               :disabled="
@@ -104,18 +104,89 @@
           </div>
 
           <!-- 댓글 목록 -->
-          <div class="mt-6 rounded-lg bg-gray-50 p-4">
-            <div v-if="comments.length === 0" class="text-sm text-gray-500">
-              아직 댓글이 없습니다.
-            </div>
-            <div v-for="(comment, index) in comments" :key="index" class="mt-4">
-              <div class="flex items-center space-x-2">
-                <span class="font-medium text-gray-700">User</span>
-                <span class="text-sm text-gray-500">{{ comment.date }}</span>
-              </div>
-              <p class="mt-2 text-gray-600">{{ comment.text }}</p>
-            </div>
+<div class="space-y-6">
+  <h3 class="text-lg font-semibold">댓글</h3>
+  
+  <div v-if="isCommentsLoading" class="flex justify-center py-4">
+    <div class="animate-spin text-[#ff6f3b]">댓글 로딩중...</div>
+  </div>
+  
+  <div v-else class="space-y-4">
+    <!-- 댓글이 없는 경우 -->
+    <div v-if="!comments.length" class="text-center text-gray-500 py-4">
+      첫 번째 댓글을 작성해보세요!
+    </div>
+    
+    <!-- 댓글 목록 -->
+    <div 
+      v-for="comment in comments" 
+      :key="comment.commentId" 
+      class="rounded-lg bg-gray-50 p-4 space-y-2"
+    >
+       <!-- 댓글 수정 모드가 아닐 때 -->
+       <div v-if="editingCommentId !== comment.commentId">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center space-x-2">
+            <span class="font-medium">{{ comment.commentAuthorName }}</span>
+            <span class="text-sm text-gray-500">{{ comment.commentCreateDate }}</span>
           </div>
+          <!-- 자신의 댓글인 경우에만 수정/삭제 버튼 표시 -->
+          <div v-if="comment.commentAuthorId === userStore.userId" class="space-x-2">
+            <button 
+              @click="startEdit(comment)"
+              class="text-sm text-gray-400 hover:text-[#ff6f3b]"
+            >
+              수정
+            </button>
+            <button 
+              @click="deleteComment(comment.commentId)"
+              class="text-sm text-gray-400 hover:text-red-500"
+            >
+              삭제
+            </button>
+          </div>
+        </div>
+        <p class="text-gray-700">{{ comment.commentContent }}</p>
+      </div>
+
+      <!-- 댓글 수정 모드일 때 -->
+      <div v-else class="space-y-2">
+        <textarea
+          v-model="editingCommentContent"
+          class="w-full resize-none rounded-lg border border-gray-300 p-2 focus:border-[#ff6f3b] focus:outline-none focus:ring-1 focus:ring-[#ff6f3b]"
+          rows="3"
+        ></textarea>
+        <div class="flex justify-end space-x-2">
+          <button
+            @click="cancelEdit"
+            class="rounded-lg px-3 py-1 text-sm text-gray-500 hover:text-gray-700"
+          >
+            취소
+          </button>
+          <button
+            @click="updateComment(comment.commentId)"
+            class="rounded-lg bg-[#ff6f3b] px-3 py-1 text-sm text-white hover:bg-[#ff5722]"
+          >
+            저장
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 페이지네이션 -->
+    <div v-if="commentPageInfo.totalPages > 1" class="mt-6 flex justify-center space-x-2">
+      <button
+        v-for="page in commentPageInfo.totalPages"
+        :key="page"
+        @click="loadComments(page)"
+        class="rounded-lg px-4 py-2"
+        :class="currentPage === page ? 'bg-[#ff6f3b] text-white' : 'bg-white text-gray-600 hover:bg-gray-100'"
+      >
+        {{ page }}
+      </button>
+    </div>
+  </div>
+</div>
 
           <!-- 댓글 입력창 -->
           <div class="mt-6">
@@ -140,85 +211,199 @@
 </template>
 
 <script setup>
-import { watch, ref, defineProps, defineEmits, onMounted } from 'vue'
+import {ref } from 'vue'
 import { useUserStore } from '@/stores/user'
 import api from '@/api/axios'
-// 입력된 새로운 댓글을 저장하는 변수
-const newComment = ref('')
+
+
+// 1. 먼저 props 정의
+const props = defineProps({
+  challenge: Object,
+  challengeDetail: Object,
+  isLoading: Boolean,
+  challengeId: {
+    type: [String, Number],
+    required: true
+  },
+  initialComments: {
+    type: Array,
+    default: () => []
+  },
+  initialCommentPageInfo: {
+    type: Object,
+    default: () => ({
+      currentPage: 1,
+      pageSize: 10,
+      totalElements: 0,
+      totalPages: 0
+    })
+  }
+})
+
+// 2. emit 정의
+const emit = defineEmits(['close'])
+
+// 3. store 초기화
 const userStore = useUserStore()
 
-// 댓글 리스트 (실제로는 API에서 받아올 수 있습니다)
-const comments = ref([
-  { text: '이 챌린지는 정말 좋네요!', date: '2024-11-24' },
-  { text: '이 챌린지에 참여하고 싶어요!', date: '2024-11-23' },
-])
+// 4. ref들 정의
+const newComment = ref('')
+const comments = ref(props.initialComments || [])
+const commentPageInfo = ref(props.initialCommentPageInfo || {
+  currentPage: 1,
+  pageSize: 10,
+  totalElements: 0,
+  totalPages: 0
+})
+const currentPage = ref(1)
+const isCommentsLoading = ref(false)
 
 // 상태 변수
 const showCancelModal = ref(false) // 참여 취소 모달 표시 여부
 const isLoading = ref(false) // 로딩 상태 추적
 const isJoined = ref(false) // 참여 여부 추적
 
-// 댓글 추가 함수
-const addComment = () => {
-  if (newComment.value.trim() !== '') {
-    const date = new Date().toLocaleDateString()
-    comments.value.push({ text: newComment.value, date })
+// 수정 관련 상태 추가
+const editingCommentId = ref(null)
+const editingCommentContent = ref('')
+
+// 수정 시작
+const startEdit = (comment) => {
+  editingCommentId.value = comment.commentId
+  editingCommentContent.value = comment.commentContent
+}
+
+// 수정 취소
+const cancelEdit = () => {
+  editingCommentId.value = null
+  editingCommentContent.value = ''
+}
+
+
+
+// 5. 함수들 정의
+const loadComments = async (page) => {
+  isCommentsLoading.value = true
+  try {
+    const response = await api.get(`/challenge/${props.challengeId}/comment`, {
+      params: {
+        page: page,
+        size: commentPageInfo.value.pageSize
+      }
+    })
+    
+    if (response.data.content) {
+      comments.value = response.data.content
+      commentPageInfo.value = response.data.pageInfo || commentPageInfo.value
+      currentPage.value = page
+    }
+  } catch (error) {
+    console.error('댓글 로딩 실패:', error)
+  } finally {
+    isCommentsLoading.value = false
+  }
+}
+
+// 댓글 삭제 (기존 함수 수정)
+const deleteComment = async (commentId) => {
+  if (!confirm('댓글을 삭제하시겠습니까?')) return
+  
+  try {
+    await api.delete(`/challenge/${props.challengeId}/comment/${commentId}`)
+    // 댓글 목록 새로고침
+    await loadComments(currentPage.value)
+  } catch (error) {
+    console.error('댓글 삭제 실패:', error)
+    alert('댓글 삭제에 실패했습니다.')
+  }
+}
+
+// 댓글 수정
+const updateComment = async (commentId) => {
+  if (editingCommentContent.value.trim() === '') {
+    alert('댓글 내용을 입력해주세요.')
+    return
+  }
+
+  try {
+    await api.put(`/challenge/${props.challengeId}/comment/${commentId}`, {
+      commentContent : editingCommentContent.value,
+    })
+
+    console.log(currentPage.value)
+
+    // 댓글 목록 새로고침
+    await loadComments(currentPage.value)
+    
+    // 수정 모드 종료
+    cancelEdit()
+  } catch (error) {
+    console.error('댓글 수정 실패:', error)
+    alert('댓글 수정에 실패했습니다.')
+  }
+}
+
+// 댓글 추가
+const addComment = async () => {
+  if (newComment.value.trim() === '') return
+  
+  try {
+    // API 호출 추가 (실제 엔드포인트에 맞게 수정 필요)
+    await api.post(`/challenge/${props.challengeId}/comment`, {
+      commentContent : newComment.value,
+      commentAuthorId : userStore.userId
+    })
+    
+    // 댓글 목록 새로고침
+    await loadComments(currentPage.value)
     newComment.value = ''
+  } catch (error) {
+    console.error('댓글 작성 실패:', error)
   }
 }
 
-const props = defineProps({
-  challenge: Object, // challenge 객체를 받는다.
-  challengeDetail: Object, // 추가적인 challenge 세부 정보
-  isLoading: Boolean, // 모달 로딩 상태
-})
-// 챌린지 참여 함수
 const joinChallenge = async () => {
-  console.log('Challenge ID:', props.challengeDetail.challengeId)
-  console.log('참여 여부:', props.challengeDetail.challengeIsParticipant)
-  const challenge = props.challengeDetail
-  if (userStore.userId && challenge.challengeId) {
-    isLoading.value = true
-    try {
-      // API 요청: 챌린지 참여
-      const response = await api.post(`challenge/${challenge.challengeId}`, {
-        userId: userStore.userId,
-      })
+  if (!userStore.userId || !props.challengeDetail?.challengeId) return
+  
+  isLoading.value = true
+  try {
+    const response = await api.post(`challenge/${props.challengeDetail.challengeId}`, {
+      userId: userStore.userId,
+    })
 
-      // API 응답 성공 시 참여 상태 업데이트
-      if (response.status === 200) {
-        isJoined.value = true
-        // 참여 성공 시 상태 업데이트
-        console.log(challengeDetail)
-        challenge.challengeIsParticipant = 1
-        console.log('성공')
+    if (response.status === 200) {
+      isJoined.value = true
+      if (props.challengeDetail) {
+        props.challengeDetail.challengeIsParticipant = 1
       }
-    } catch (error) {
-      console.error('챌린지 참여에 실패했습니다:', error)
-    } finally {
-      isLoading.value = false
     }
+  } catch (error) {
+    console.error('챌린지 참여 실패:', error)
+  } finally {
+    isLoading.value = false
   }
 }
-// 참여 취소 함수
+
 const cancelParticipation = async () => {
-  if (userStore.userId) {
-    try {
-      const response = await api.delete(`challenge/${props.challenge.challengeId}/participant`, {
-        data: { userId: userStore.userId },
-      })
-      if (response.status === 200) {
-        // 참여 취소 성공 시 상태 업데이트
-        props.challengeIsParticipant = 0
-        showCancelModal.value = false
+  if (!userStore.userId || !props.challenge?.challengeId) return
+  
+  try {
+    const response = await api.delete(`challenge/${props.challenge.challengeId}/participant`, {
+      data: { userId: userStore.userId },
+    })
+    if (response.status === 200) {
+      if (props.challengeDetail) {
+        props.challengeDetail.challengeIsParticipant = 0
       }
-    } catch (error) {
-      console.error('참여 취소 실패:', error)
+      showCancelModal.value = false
     }
+  } catch (error) {
+    console.error('참여 취소 실패:', error)
   }
 }
-// 함수들을 컴포넌트 내부에서 정의
+
 const getChallengeType = (title) => {
+  if (!title) return '일일'
   if (title.includes('일일')) return '일일'
   if (title.includes('주간')) return '주간'
   if (title.includes('월간')) return '월간'
