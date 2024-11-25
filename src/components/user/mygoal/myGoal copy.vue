@@ -2,57 +2,47 @@
 <template>
   <div class="flex h-full w-full items-center justify-center">
     <div class="mx-auto w-2/5 p-6">
-      <h1 class="font-paperlogy mb-8">내 목표 관리</h1>
-
+      <h1 class="font-paperlogy mb-8 text-2xl">내 목표 관리</h1>
+ 
       <form @submit.prevent="handleSubmit" class="space-y-6">
-        <!-- 챌린지 필드 -->
+        <!-- 챌린지 카테고리 선택 -->
         <div class="flex flex-col space-y-1">
-          <label for="challenge" class="mb-2 block text-sm">챌린지</label>
-          <input
-            id="challenge"
-            v-model="goalInfo.challenge"
-            type="text"
-            placeholder="[월간_EVENT] 일일챌린지 워킹!ver"
+          <label for="challengeCategory" class="mb-2 block">챌린지 카테고리</label>
+          <select
+            id="challengeCategory"
+            v-model="goalInfo.challengeCategoryCode"
             class="w-full rounded-md border border-gray-200 px-3 py-3 text-base"
-          />
+          >
+            <option value="1">달리기</option>
+            <option value="2">걷기</option>
+          </select>
         </div>
-
-        <!-- 운동유형 필드 -->
+ 
+        <!-- 챌린지 단위 선택 -->
         <div class="flex flex-col space-y-1">
-          <label for="type" class="mb-2 block text-sm">운동유형</label>
-          <input
-            id="type"
-            v-model="goalInfo.type"
-            type="text"
-            placeholder="달리기 / 걷기"
+          <label for="challengeUnit" class="mb-2 block text-sm">챌린지 단위</label>
+          <select
+            id="challengeUnit"
+            v-model="goalInfo.challengeCategoryUnitCode"
             class="w-full rounded-md border border-gray-200 px-3 py-3 text-base"
-          />
+          >
+            <option value="1">시간(hour)</option>
+            <option value="2">거리(km)</option>
+          </select>
         </div>
-
-        <!-- 목표 유형 필드 -->
-        <div class="flex flex-col space-y-1">
-          <label for="goalType" class="mb-2 block text-sm">목표 유형</label>
-          <input
-            id="goalType"
-            v-model="goalInfo.goalType"
-            type="text"
-            placeholder="시간(hour) / 거리(km)"
-            class="w-full rounded-md border border-gray-200 px-3 py-3 text-base"
-          />
-        </div>
-
+ 
         <!-- 목표량 필드 -->
         <div class="flex flex-col space-y-1">
           <label for="amount" class="mb-2 block text-sm">목표량</label>
           <input
             id="amount"
-            v-model="goalInfo.amount"
-            type="text"
+            v-model="goalInfo.targetAmount"
+            type="number"
             placeholder="숫자를 입력하세요"
             class="w-full rounded-md border border-gray-200 px-3 py-3 text-base"
           />
         </div>
-
+ 
         <!-- 날짜 선택 -->
         <div class="grid grid-cols-2 gap-4">
           <div class="flex flex-col space-y-1">
@@ -64,7 +54,7 @@
               class="w-full rounded-md border border-gray-200 px-3 py-3 text-base"
             />
           </div>
-
+ 
           <div class="flex flex-col space-y-1">
             <label for="endDate" class="mb-2 block text-sm">종료날짜</label>
             <input
@@ -75,7 +65,7 @@
             />
           </div>
         </div>
-
+ 
         <!-- 버튼 그룹 -->
         <div class="flex justify-center space-x-4 pt-4">
           <button
@@ -95,47 +85,68 @@
       </form>
     </div>
   </div>
-</template>
-
-<script>
-import { reactive } from 'vue'
-import { useRouter } from 'vue-router'
-
-export default {
+ </template>
+ 
+ <script>
+ import { ref, reactive } from 'vue'
+ import { useRouter } from 'vue-router'
+ import { useUserStore } from '@/stores/user'
+ import api from '@/api/axios'
+ 
+ export default {
   name: 'MyGoalForm',
-
+ 
   setup() {
     const router = useRouter()
-
+    const userStore = useUserStore()
+ 
     const goalInfo = reactive({
-      challenge: '',
-      type: '',
-      goalType: '',
-      amount: '',
+      userId: userStore.userId,
+      challengeCategoryCode: '',
+      challengeCategoryUnitCode: '',
       startDate: '',
       endDate: '',
+      targetAmount: '',
     })
-
+ 
     const handleSubmit = async () => {
       try {
-        // API 호출 등 실제 목표 추가 로직 구현
-        console.log('목표 추가:', goalInfo)
+        // 선택한 값으로 goalInfo 객체 업데이트
+        const payload = {
+          userId: userStore.userId,
+          challengeCategoryCode: goalInfo.challengeCategoryCode,
+          challengeCategoryUnitCode: goalInfo.challengeCategoryUnitCode,
+          startDate: goalInfo.startDate,
+          endDate: goalInfo.endDate,
+          targetAmount: goalInfo.targetAmount,
+        }
+ 
+        const token = localStorage.getItem('accessToken')
+ 
+        // API 호출하여 목표 등록
+        await api.post(`/user/${userStore.userId}/goal`, payload, {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+        })
+        console.log('목표 추가 성공:', payload)
         // 성공 시 목록 페이지로 이동
         router.push('/user/goal')
       } catch (error) {
         console.error('목표 추가 실패:', error)
       }
     }
-
+ 
     const handleCancel = () => {
       router.push('/user/goal')
     }
-
+ 
     return {
       goalInfo,
       handleSubmit,
       handleCancel,
     }
   },
-}
-</script>
+ }
+ </script>
