@@ -80,7 +80,11 @@ const checkLoginStatus = async () => {
     } else {
       // accessToken이 없을 때
       const currentPath = router.currentRoute.value.path
-      if (currentPath === '/' || currentPath.startsWith('/user') || currentPath.startsWith('/admin')) {
+      if (
+        currentPath === '/' ||
+        currentPath.startsWith('/user') ||
+        currentPath.startsWith('/admin')
+      ) {
         router.push({ name: 'login' })
       }
     }
