@@ -73,10 +73,11 @@
 
     <!-- 목표 상세 모달 -->
     <myGoalDetail
-      v-if="selectedGoal"
-      :goal="selectedGoal"
-      @close="closeDetail"
-    />
+  v-if="selectedGoal"
+  :goal="selectedGoal"
+  @close="closeDetail"
+  @update="handleGoalUpdated"
+/>
   </div>
 </template>
 
@@ -165,6 +166,11 @@ const closeModal = () => {
 
 const handleGoalAdded = async () => {
   await fetchGoals()
+}
+
+const handleGoalUpdated = async () => {
+  await fetchGoals()  // 목표 목록 새로고침
+  selectedGoal.value = null  // 모달 닫기
 }
 
 onMounted(() => {
