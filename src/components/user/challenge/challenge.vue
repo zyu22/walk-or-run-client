@@ -128,23 +128,25 @@
     </button>
   </div>
 
-  
-  <!-- 챌린지 상세 모달 -->
-<ChallengeDetailModal
-  v-if="selectedChallenge && !isModalLoading"
-  :challenge="selectedChallenge"
-  :challengeDetail="challengeDetail || {}"
-  :initialComments="comments || []"
-  :initialCommentPageInfo="commentPageInfo || {
-    currentPage: 1,
-    pageSize: 10,
-    totalElements: 0,
-    totalPages: 0
-  }"
-  :isLoading="isModalLoading"
-  :challengeId="selectedChallenge.challengeId"
-  @close="closeModal"
-/>
+  <!-- challenge.vue -->
+  <ChallengeDetailModal
+    v-if="selectedChallenge && !isModalLoading"
+    :challenge="selectedChallenge"
+    :challengeDetail="challengeDetail || {}"
+    :challengeType="getChallengeType(selectedChallenge)"
+    :initialComments="comments || []"
+    :initialCommentPageInfo="
+      commentPageInfo || {
+        currentPage: 1,
+        pageSize: 10,
+        totalElements: 0,
+        totalPages: 0,
+      }
+    "
+    :isLoading="isModalLoading"
+    :challengeId="selectedChallenge.challengeId"
+    @close="closeModal"
+  />
 </template>
 
 <script setup>
@@ -160,7 +162,6 @@ const filterStatus = ref('전체')
 const filterType = ref('전체')
 const currentPage = ref(1)
 const comments = ref([])
-const isCommentsLoading = ref(false)
 const selectedChallenge = ref(null)
 const challengeDetail = ref(null) // 챌린지 상세 정보 저장
 const isModalLoading = ref(false) // 모달 로딩 상태
@@ -175,9 +176,9 @@ const pageInfo = ref({
 })
 const commentPageInfo = ref({
   currentPage: 1,
-  pageSize: 10,
+  pageSize: 5,
   totalElements: 0,
-  totalPages: 0
+  totalPages: 0,
 })
 
 // 필터 상태 변경 처리 함수
@@ -188,17 +189,18 @@ const handleStatusChange = (status) => {
   getChallege() // 필터 상태 변경 시 API 호출
 }
 
+// 참여율 계산
 const getParticipationRate = (challenge) => {
   if (!challenge.challengeTargetCnt || challenge.challengeTargetCnt === 0) return 0
   return ((challenge.challengeParticipantCnt / challenge.challengeTargetCnt) * 100).toFixed(1)
 }
 
+// 태그 계산
 const getChallengeType = (challenge) => {
-  const start = new Date(challenge.challengeCreateDate) // 또는 challenge_create_date
-  const end = new Date(challenge.challengeDeleteDate) // 또는 challenge_delete_date
+  const start = new Date(challenge.challengeCreateDate)
+  const end = new Date(challenge.challengeDeleteDate)
 
   if (!start || !end) {
-    console.log('날짜 확인:', challenge) // 디버깅용
     return '일일' // 기본값
   }
 
@@ -211,7 +213,7 @@ const getChallengeType = (challenge) => {
   return '이벤트'
 }
 
-// API에서 챌린지 데이터 가져오기
+// 챌린지 조회
 const getChallege = async (page = 1) => {
   isLoading.value = true
   error.value = null
@@ -245,47 +247,42 @@ const getChallege = async (page = 1) => {
   }
 }
 
-// getChallengeDetail 함수도 수정
+// 챌린지 상세보기
 const getChallengeDetail = async (challengeId) => {
-  console.log('상세 정보 요청:', challengeId) // 디버깅 로그 추가
   try {
     const response = await api.get(`/challenge/${challengeId}`, {
       params: {
         userId: userStore.userId,
       },
     })
-    console.log('상세보기 응답:', response) // 디버깅 로그 추가
     challengeDetail.value = response.data || {}
     return response.data
   } catch (err) {
     console.error('챌린지 상세 정보 에러:', err)
     console.error('에러 응답:', err.response) // 에러 응답 상세 확인
     challengeDetail.value = null
-    throw err  // 에러를 상위로 전파
+    throw err // 에러를 상위로 전파
   }
 }
 
-// getComments 함수도 수정
+// 댓글 조회
 const getComments = async (challengeId, page = 1) => {
-  console.log('댓글 요청:', challengeId, page) // 디버깅 로그 추가
-  console.log('사이즈:', commentPageInfo.value.pageSize)
   try {
     const response = await api.get(`/challenge/${challengeId}/comment`, {
       params: {
         page: page,
-        size: commentPageInfo.value.pageSize
-      }
+        size: commentPageInfo.value.pageSize,
+      },
     })
-    
-    if(response.status === 204) {
 
-    } else if(response.status === 200) {
+    if (response.status === 204) {
+    } else if (response.status === 200) {
       comments.value = response.data.content
       commentPageInfo.value = response.data.pageInfo || {
         currentPage: 1,
-        pageSize: 10,
+        pageSize: 5,
         totalElements: 0,
-        totalPages: 0
+        totalPages: 0,
       }
     }
     return response.data
@@ -293,7 +290,7 @@ const getComments = async (challengeId, page = 1) => {
     console.error('댓글 로딩 에러:', err)
     console.error('에러 응답:', err.response) // 에러 응답 상세 확인
     comments.value = []
-    throw err  // 에러를 상위로 전파
+    throw err // 에러를 상위로 전파
   }
 }
 
@@ -326,27 +323,20 @@ const getChallengeTypeColor = (type) => {
 }
 
 const openChallengeModal = async (challenge) => {
-  console.log('모달 열기 시도:', challenge) // 디버깅 로그 추가
-  
   if (!challenge?.challengeId) {
     console.error('유효하지 않은 챌린지:', challenge)
     return
   }
 
   selectedChallenge.value = challenge
-  
+
   try {
     isModalLoading.value = true
-    console.log('API 호출 시작') // 디버깅 로그 추가
-    
+
     const detailPromise = getChallengeDetail(challenge.challengeId)
     const commentsPromise = getComments(challenge.challengeId)
-    
-    const [detailResponse, commentsResponse] = await Promise.all([
-      detailPromise,
-      commentsPromise
-    ])
-    
+
+    const [detailResponse, commentsResponse] = await Promise.all([detailPromise, commentsPromise])
   } catch (error) {
     console.error('모달 데이터 로딩 중 오류:', error)
     // 에러 발생 시에도 사용자에게 알림
@@ -359,5 +349,11 @@ const openChallengeModal = async (challenge) => {
 const closeModal = () => {
   selectedChallenge.value = null
   comments.value = null
+  commentPageInfo.value = {
+    currentPage: 1,
+    pageSize: 5,
+    totalElements: 0,
+    totalPages: 0,
+  }
 }
 </script>
