@@ -20,8 +20,10 @@ export const useUserStore = defineStore('user', {
     },
     clearUserInfo() {
       // localStorage 키 이름을 일관되게 수정
+      console.log('사라지기전: ', localStorage.getItem('accessToken'))
       localStorage.removeItem('accessToken')
       localStorage.removeItem('refreshToken')
+      console.log('사라지고: ', localStorage.getItem('accessToken'))
       // store 상태 초기화
       this.userId = null
       this.userRole = null
