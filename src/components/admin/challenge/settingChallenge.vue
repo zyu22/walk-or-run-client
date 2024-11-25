@@ -105,6 +105,7 @@
           <tr
             v-for="challenge in filteredChallenges"
             :key="challenge.challengeId"
+            @click="openDetailModal(challenge)"
             :class="[
               'group transition-colors',
               challenge.dday === '종료' ? 'is-ended bg-gray-50' : 'bg-white',
@@ -224,14 +225,7 @@
     :challengeDetail="challengeDetail || {}"
     :challengeType="getChallengeType(selectedChallenge)"
     :initialComments="comments || []"
-    :initialCommentPageInfo="
-      commentPageInfo || {
-        currentPage: 1,
-        pageSize: 10,
-        totalElements: 0,
-        totalPages: 0,
-      }
-    "
+    :initialCommentPageInfo="commentPageInfo"
     :isLoading="isModalLoading"
     :challengeId="selectedChallenge.challengeId"
     @close="closeDetailModal"
@@ -240,10 +234,12 @@
 
 <script setup>
 import { ref, onMounted, computed } from 'vue'
+import { useUserStore } from '@/stores/user'
 import api from '@/api/axios'
 import ChallengeAddModal from '@/components/admin/challenge/addChallenge.vue'
 import settingChallengeDetailModal from '@/components/admin/challenge/settingChallengeDetailModal.vue'
 
+const userStore = useUserStore()
 const challengeStatus = ['전체', '진행중인 챌린지', '종료된 챌린지']
 const challengeTypes = ['전체', '일일', '주간', '월간', '이벤트']
 const filterStatus = ref('전체')
@@ -370,6 +366,30 @@ const getChallengeType = (challenge) => {
   return '이벤트'
 }
 
+const openDetailModal = async (challenge) => {
+  if (!challenge?.challengeId) {
+    console.error('유효하지 않은 챌린지:', challenge)
+    return
+  }
+
+  selectedChallenge.value = challenge
+
+  try {
+    isModalLoading.value = true
+
+    const detailPromise = getChallengeDetail(challenge.challengeId)
+    const commentsPromise = getComments(challenge.challengeId)
+
+    const [detailResponse, commentsResponse] = await Promise.all([detailPromise, commentsPromise])
+  } catch (error) {
+    console.error('모달 데이터 로딩 중 오류:', error)
+    // 에러 발생 시에도 사용자에게 알림
+    alert('데이터를 불러오는데 실패했습니다.')
+  } finally {
+    isModalLoading.value = false
+  }
+}
+
 // 챌린지 상세보기
 const getChallengeDetail = async (challengeId) => {
   try {
@@ -378,8 +398,20 @@ const getChallengeDetail = async (challengeId) => {
         userId: userStore.userId,
       },
     })
-    challengeDetail.value = response.data || {}
-    return response.data
+
+    const data = response.data || {}
+    challengeDetail.value = {
+      ...data,
+      // 날짜 값을 `YYYY-MM-DD` 형식으로 변환
+      challengeCreateDate: data.challengeCreateDate
+        ? new Date(data.challengeCreateDate).toISOString().split('T')[0]
+        : '',
+      challengeDeleteDate: data.challengeDeleteDate
+        ? new Date(data.challengeDeleteDate).toISOString().split('T')[0]
+        : '',
+    }
+
+    return challengeDetail.value
   } catch (err) {
     console.error('챌린지 상세 정보 에러:', err)
     console.error('에러 응답:', err.response) // 에러 응답 상세 확인
