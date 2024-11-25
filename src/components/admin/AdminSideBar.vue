@@ -97,7 +97,7 @@
             @click="handleLogout"
             class="flex w-full items-center rounded-lg px-4 py-3 text-gray-600 transition-colors hover:bg-white"
           >
-            <span class="mr-3">🚪</span>
+            <span class="mr-3">🚪door</span>
             Log out
           </button>
         </div>
