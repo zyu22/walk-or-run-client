@@ -1,24 +1,22 @@
 <!-- components/user/MyGoals.vue -->
 <template>
-
-<header class="mb-8 flex items-center justify-between">
-      <div>
-        <h1 class="font-paperlogy text-5xl font-bold text-gray-900">내 목표 관리</h1>
-        <p class="mt-2 text-sm text-gray-600">나만의 목표를 추가하거나 수정해보세요!</p>
-      </div>
-      <div class="flex items-center gap-4">
-        <button
-          @click="openModal"
-          class="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition-colors"
-        >
-          목표 추가
-        </button>
-      </div>
-    </header>
-
-  <div class="bg-white rounded-lg shadow-lg p-6">
-    <div class="flex justify-between items-center mb-6">
+  <header class="mb-8 flex items-center justify-between">
+    <div>
+      <h1 class="font-paperlogy text-5xl font-bold text-gray-900">내 목표 관리</h1>
+      <p class="mt-2 text-sm text-gray-600">나만의 목표를 추가하거나 수정해보세요!</p>
     </div>
+    <div class="flex items-center gap-4">
+      <button
+        @click="openModal"
+        class="rounded-lg bg-orange-500 px-4 py-2 text-white transition-colors hover:bg-orange-600"
+      >
+        목표 추가
+      </button>
+    </div>
+  </header>
+
+  <div class="rounded-lg bg-white p-6 shadow-lg">
+    <div class="mb-6 flex items-center justify-between"></div>
 
     <!-- 목표 목록 -->
     <div class="space-y-4">
@@ -26,26 +24,26 @@
         <div
           v-for="goal in goals"
           :key="goal.userGoalId"
-          class="p-4 my-5 border rounded-lg hover:border-orange-500 transition-all"
+          class="my-5 rounded-lg border p-4 transition-all hover:border-orange-500"
         >
-          <div class="flex justify-between items-center">
+          <div class="flex items-center justify-between">
             <h3 class="font-medium text-gray-800">
               {{ goal.challengeCategoryName }}
             </h3>
-            <button 
+            <button
               @click="showDetail(goal)"
-              class="flex items-center justify-center w-8 h-8 rounded-full hover:bg-orange-50 text-gray-400 hover:text-orange-500 transition-colors"
+              class="flex h-8 w-8 items-center justify-center rounded-full text-gray-400 transition-colors hover:bg-orange-50 hover:text-orange-500"
             >
-              <svg 
-                xmlns="http://www.w3.org/2000/svg" 
-                class="h-5 w-5" 
-                viewBox="0 0 20 20" 
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-5 w-5"
+                viewBox="0 0 20 20"
                 fill="currentColor"
               >
-                <path 
-                  fill-rule="evenodd" 
-                  d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" 
-                  clip-rule="evenodd" 
+                <path
+                  fill-rule="evenodd"
+                  d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+                  clip-rule="evenodd"
                 />
               </svg>
             </button>
@@ -53,11 +51,14 @@
           <div class="mt-2 space-y-2">
             <div class="flex justify-between text-sm">
               <span>진행도: {{ calculateTimeProgress(goal.startDate, goal.endDate) }}%</span>
-              <span class="text-sm text-gray-500">하루 목표량 : {{ goal.targetAmount }} {{ printType(goal.challengeCategoryUnitName) }}</span>
+              <span class="text-sm text-gray-500"
+                >하루 목표량 : {{ goal.targetAmount }}
+                {{ printType(goal.challengeCategoryUnitName) }}</span
+              >
             </div>
-            <div class="w-full bg-gray-200 rounded-full h-2">
+            <div class="h-2 w-full rounded-full bg-gray-200">
               <div
-                class="bg-orange-500 h-2 rounded-full transition-all"
+                class="h-2 rounded-full bg-orange-500 transition-all"
                 :style="{ width: `${calculateTimeProgress(goal.startDate, goal.endDate)}%` }"
               ></div>
             </div>
@@ -68,25 +69,21 @@
           </div>
         </div>
       </div>
-      <div v-else class="text-center py-8 text-gray-500">
+      <div v-else class="py-8 text-center text-gray-500">
         <p>설정된 목표가 없습니다</p>
       </div>
     </div>
 
     <!-- 목표 추가 모달 -->
-    <GoalFormModal 
-      :is-open="isModalOpen"
-      @close="closeModal"
-      @goal-added="handleGoalAdded"
-    />
+    <GoalFormModal :is-open="isModalOpen" @close="closeModal" @goal-added="handleGoalAdded" />
 
     <!-- 목표 상세 모달 -->
     <myGoalDetail
-  v-if="selectedGoal"
-  :goal="selectedGoal"
-  @close="closeDetail"
-  @update="handleGoalUpdated"
-/>
+      v-if="selectedGoal"
+      :goal="selectedGoal"
+      @close="closeDetail"
+      @update="handleGoalUpdated"
+    />
   </div>
 </template>
 
@@ -94,20 +91,20 @@
 import { ref, onMounted } from 'vue'
 import { useUserStore } from '@/stores/user'
 import api from '@/api/axios'
-import GoalFormModal from '@/components/user/mygoal/GoalFormModal.vue'
+import GoalFormModal from '@/components/user/mygoal/goalFormModal.vue'
 import myGoalDetail from '@/components/user/mygoal/myGoalDetail.vue'
 
 const userStore = useUserStore()
 const goals = ref([])
 const isModalOpen = ref(false)
-const selectedGoal = ref(null)  // 추가: 선택된 목표 상태
+const selectedGoal = ref(null) // 추가: 선택된 목표 상태
 
 const fetchGoals = async () => {
   try {
     const response = await api.get(`/user/${userStore.userId}/goal`, {
       headers: {
-        'Authorization': `Bearer ${userStore.accessToken}`
-      }
+        Authorization: `Bearer ${userStore.accessToken}`,
+      },
     })
     goals.value = response.data
     console.log(goals.value)
@@ -161,7 +158,7 @@ const formatDate = (date) => {
   return new Date(date).toLocaleDateString('ko-KR', {
     year: 'numeric',
     month: 'long',
-    day: 'numeric'
+    day: 'numeric',
   })
 }
 
@@ -178,8 +175,8 @@ const handleGoalAdded = async () => {
 }
 
 const handleGoalUpdated = async () => {
-  await fetchGoals()  // 목표 목록 새로고침
-  selectedGoal.value = null  // 모달 닫기
+  await fetchGoals() // 목표 목록 새로고침
+  selectedGoal.value = null // 모달 닫기
 }
 
 onMounted(() => {
