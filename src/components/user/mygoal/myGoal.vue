@@ -1,14 +1,22 @@
 <!-- components/user/MyGoals.vue -->
 <template>
+
+<header class="mb-8 flex items-center justify-between">
+      <div>
+        <h1 class="font-paperlogy text-5xl font-bold text-gray-900">내 목표 관리</h1>
+      </div>
+      <div class="flex items-center gap-4">
+        <button
+          @click="openModal"
+          class="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition-colors"
+        >
+          목표 추가
+        </button>
+      </div>
+    </header>
+
   <div class="bg-white rounded-lg shadow-lg p-6">
     <div class="flex justify-between items-center mb-6">
-      <h2 class="text-2xl font-semibold text-gray-800">내 목표 관리</h2>
-      <button
-        @click="openModal"
-        class="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition-colors"
-      >
-        목표 추가
-      </button>
     </div>
 
     <!-- 목표 목록 -->
