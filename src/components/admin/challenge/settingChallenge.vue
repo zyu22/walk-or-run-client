@@ -212,9 +212,29 @@
 
   <!-- 챌린지 추가 모달 -->
   <ChallengeAddModal
-    :is-open="isAddModelOpen"
+    :is-open="isAddModalOpen"
     @close="closeAddModal"
     @refresh="refreshChallenges"
+  />
+
+  <!-- 챌린지 상세 모달 -->
+  <settingChallengeDetailModal
+    v-if="selectedChallenge && !isModalLoading"
+    :challenge="selectedChallenge"
+    :challengeDetail="challengeDetail || {}"
+    :challengeType="getChallengeType(selectedChallenge)"
+    :initialComments="comments || []"
+    :initialCommentPageInfo="
+      commentPageInfo || {
+        currentPage: 1,
+        pageSize: 10,
+        totalElements: 0,
+        totalPages: 0,
+      }
+    "
+    :isLoading="isModalLoading"
+    :challengeId="selectedChallenge.challengeId"
+    @close="closeDetailModal"
   />
 </template>
 
@@ -222,10 +242,21 @@
 import { ref, onMounted, computed } from 'vue'
 import api from '@/api/axios'
 import ChallengeAddModal from '@/components/admin/challenge/addChallenge.vue'
+import settingChallengeDetailModal from '@/components/admin/challenge/settingChallengeDetailModal.vue'
 
+const challengeStatus = ['전체', '진행중인 챌린지', '종료된 챌린지']
+const challengeTypes = ['전체', '일일', '주간', '월간', '이벤트']
+const filterStatus = ref('전체')
+const filterType = ref('전체')
+
+const selectedChallenge = ref(null)
+const comments = ref([])
+const challengeDetail = ref(null) // 챌린지 상세 정보 저장
+const isModalLoading = ref(false) // 모달 로딩 상태
 const challenges = ref([])
 const isLoading = ref(false)
-const isAddModelOpen = ref(false)
+const isAddModalOpen = ref(false)
+const isDetailModalOpen = ref(false)
 const error = ref(null)
 const currentPage = ref(1)
 const pageInfo = ref({
@@ -235,17 +266,30 @@ const pageInfo = ref({
   totalPages: 0,
 })
 
-const challengeStatus = ['전체', '진행중인 챌린지', '종료된 챌린지']
-const challengeTypes = ['전체', '일일', '주간', '월간', '이벤트']
-const filterStatus = ref('전체')
-const filterType = ref('전체')
+const commentPageInfo = ref({
+  currentPage: 1,
+  pageSize: 5,
+  totalElements: 0,
+  totalPages: 0,
+})
 
 const openAddmodal = () => {
-  isAddModelOpen.value = true
+  isAddModalOpen.value = true
 }
 
 const closeAddModal = () => {
-  isAddModelOpen.value = false
+  isAddModalOpen.value = false
+}
+
+const closeDetailModal = () => {
+  selectedChallenge.value = null
+  comments.value = null
+  commentPageInfo.value = {
+    currentPage: 1,
+    pageSize: 5,
+    totalElements: 0,
+    totalPages: 0,
+  }
 }
 
 // 챌린지 목록 새로고침
@@ -324,6 +368,53 @@ const getChallengeType = (challenge) => {
   if (diffDays <= 7) return '주간'
   if (diffDays <= 31) return '월간'
   return '이벤트'
+}
+
+// 챌린지 상세보기
+const getChallengeDetail = async (challengeId) => {
+  try {
+    const response = await api.get(`/challenge/${challengeId}`, {
+      params: {
+        userId: userStore.userId,
+      },
+    })
+    challengeDetail.value = response.data || {}
+    return response.data
+  } catch (err) {
+    console.error('챌린지 상세 정보 에러:', err)
+    console.error('에러 응답:', err.response) // 에러 응답 상세 확인
+    challengeDetail.value = null
+    throw err // 에러를 상위로 전파
+  }
+}
+
+// 댓글 조회
+const getComments = async (challengeId, page = 1) => {
+  try {
+    const response = await api.get(`/challenge/${challengeId}/comment`, {
+      params: {
+        page: page,
+        size: commentPageInfo.value.pageSize,
+      },
+    })
+
+    if (response.status === 204) {
+    } else if (response.status === 200) {
+      comments.value = response.data.content
+      commentPageInfo.value = response.data.pageInfo || {
+        currentPage: 1,
+        pageSize: 5,
+        totalElements: 0,
+        totalPages: 0,
+      }
+    }
+    return response.data
+  } catch (err) {
+    console.error('댓글 로딩 에러:', err)
+    console.error('에러 응답:', err.response) // 에러 응답 상세 확인
+    comments.value = []
+    throw err // 에러를 상위로 전파
+  }
 }
 
 // 타입별 색상 클래스
