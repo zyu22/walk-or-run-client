@@ -95,7 +95,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useUserStore } from '@/stores/user'
 import api from '@/api/axios'
 import DateRangePicker from '@/components/user/dashboard/dateRangePicker.vue'

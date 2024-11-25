@@ -29,7 +29,6 @@
             </div>
           </div>
         </div>
-
         <div class="mb-6 flex gap-4">
           <div class="relative">
             <button
@@ -52,27 +51,41 @@
                 ></path>
               </svg>
             </button>
-            <div
-              v-if="showSearchFieldOptions"
-              class="absolute left-0 z-10 mt-2 w-40 origin-top-left rounded-md bg-white py-2 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
-            >
-              <button
-                v-for="option in searchFieldOptions"
-                :key="option.value"
-                class="block w-full px-4 py-2 text-left hover:bg-gray-100"
-                @click="handleSearchFieldChange(option)"
-              >
-                {{ option.label }}
-              </button>
-            </div>
+            <!-- 드롭다운 메뉴는 그대로 유지 -->
           </div>
-          <input
-            v-model="searchQuery"
-            type="text"
-            placeholder="유저 검색"
-            class="flex-1 rounded-lg border border-gray-200 px-4 py-3"
-            :disabled="isLoading"
-          />
+          <div class="flex flex-1 gap-2">
+            <input
+              v-model="searchQuery"
+              type="text"
+              placeholder="유저 검색"
+              class="flex-1 rounded-lg border border-gray-200 px-4 py-3"
+              :disabled="isLoading"
+              @keyup.enter="handleSearchButton"
+            />
+            <button
+              @click="handleSearchButton"
+              class="rounded-lg bg-orange-500 px-6 py-3 text-white hover:bg-orange-600 disabled:opacity-50"
+              :disabled="isLoading"
+            >
+              <span class="flex items-center gap-2">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-5 w-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                  />
+                </svg>
+                검색
+              </span>
+            </button>
+          </div>
         </div>
 
         <div class="rounded-lg bg-white shadow-sm">
@@ -135,13 +148,34 @@
       </div>
     </div>
   </div>
+  <!-- 페이지네이션 -->
+  <div v-if="isSearching && pageInfo.totalPages > 1" class="mt-8 flex justify-center space-x-2">
+    <button
+      v-for="page in pageInfo.totalPages"
+      :key="page"
+      @click="handlePageChange(page)"
+      class="rounded-lg px-4 py-2"
+      :class="
+        currentPage === page
+          ? 'bg-[#ff6f3b] text-white'
+          : 'bg-white text-gray-600 hover:bg-gray-100'
+      "
+    >
+      {{ page }}
+    </button>
+  </div>
 </template>
 
 <script setup>
+onMounted(() => {
+  fetchFollowData()
+})
 import { ref, computed, onMounted, watch } from 'vue'
 import { useUserStore } from '@/stores/user'
 import api from '@/api/axios'
 import { debounce } from 'lodash'
+import { useAlertStore } from '@/stores/alert'
+const alertStore = useAlertStore()
 
 const userStore = useUserStore()
 const activeTab = ref('following')
@@ -154,6 +188,13 @@ const followingStatus = ref({})
 const followerCount = ref(0)
 const followingCount = ref(0)
 
+const currentPage = ref(1)
+const pageInfo = ref({
+  totalPages: 0,
+  totalElements: 0,
+  size: 10, // 페이지당 항목 수
+})
+
 const searchFieldOptions = [
   { label: '닉네임', value: 'nickname' },
   { label: '이메일', value: 'email' },
@@ -162,8 +203,13 @@ const searchFieldOptions = [
 const selectedSearchField = ref(searchFieldOptions[0])
 const showSearchFieldOptions = ref(false)
 
-// 검색 중인지 여부
-const isSearching = computed(() => searchQuery.value.trim().length > 0)
+// 검색 버튼을 클릭했거나 검색어가 있을 때 true
+const isSearching = ref(false)
+
+// onMounted를 스크립트의 최상위 레벨로 이동
+onMounted(() => {
+  fetchFollowData()
+})
 
 // 현재 보여줄 사용자 목록
 const displayedUsers = computed(() => {
@@ -175,11 +221,6 @@ const displayedUsers = computed(() => {
 
 const toggleSearchFieldOptions = () => {
   showSearchFieldOptions.value = !showSearchFieldOptions.value
-}
-
-const handleSearchFieldChange = (option) => {
-  selectedSearchField.value = option
-  showSearchFieldOptions.value = false
 }
 
 const checkFollowingStatus = async (userId) => {
@@ -224,13 +265,16 @@ const handleFollowToggle = async (userId) => {
     if (isFollowing(userId)) {
       // 언팔로우 요청
       await api.delete(`/user/${userStore.userId}/follow/${userId}`)
-      followingCount.value -= 1
+      if (followingCount.value != 0) {
+        followingCount.value -= 1
+      }
       // 팔로잉 목록에서 제거
       followingList.value = followingList.value.filter((user) => user.userId !== userId)
     } else {
       // 팔로우 요청
       await api.post(`/user/${userStore.userId}/follow/${userId}`)
       followingCount.value += 1
+
       // 팔로잉 목록 새로고침
       const followingResponse = await api.get(`/user/${userStore.userId}/follow/followings`)
       followingList.value = followingResponse.data
@@ -238,54 +282,110 @@ const handleFollowToggle = async (userId) => {
     // 팔로우 상태 업데이트
     await checkFollowingStatus(userId)
   } catch (error) {
-    console.error('팔로우/언팔로우 실패:', error)
+    alertStore.showNotify('오류', '팔로우/언팔로우 실패하였습니다.', 'error')
   }
 }
 
-const handleSearch = async () => {
-  if (!searchQuery.value.trim()) {
-    searchResults.value = []
-    return
-  }
-
+// 버튼 클릭이나 엔터키를 위한 즉시 검색 함수 수정
+const handleSearchButton = async () => {
+  isSearching.value = true // 검색 버튼 클릭 시 검색 모드로 변경
   isLoading.value = true
+
   try {
     const response = await api.get('/search/user', {
       params: {
         key: selectedSearchField.value.value,
-        value: searchQuery.value,
+        value: searchQuery.value.trim(), // 빈 문자열이어도 전체 검색됨
+        page: currentPage.value,
+        size: pageInfo.value.size,
       },
     })
 
-    if (Array.isArray(response.data.content)) {
+    if (response.status === 200) {
       searchResults.value = response.data.content
-      // 검색 결과의 팔로우 상태 확인
+      pageInfo.value = {
+        totalPages: response.data.pageInfo.totalPages,
+        totalElements: response.data.pageInfo.totalElements,
+        size: response.data.pageInfo.pageSize,
+      }
       await Promise.all(searchResults.value.map((user) => checkFollowingStatus(user.userId)))
     } else {
       searchResults.value = []
+      pageInfo.value = { totalPages: 0, totalElements: 0, size: 10 }
     }
   } catch (error) {
-    console.error('검색 실패:', error)
+    alertStore.showNotify('오류', '검색에 실패하였습니다.', 'error')
     searchResults.value = []
+    pageInfo.value = { totalPages: 0, totalElements: 0, size: 10 }
   } finally {
     isLoading.value = false
   }
 }
 
+// 자동 검색을 위한 디바운스 함수
+const debouncedSearch = debounce(async (query) => {
+  if (!query.trim()) {
+    searchResults.value = []
+    pageInfo.value = { totalPages: 0, totalElements: 0, size: 10 }
+    return
+  }
+
+  try {
+    const response = await api.get('/search/user', {
+      params: {
+        key: selectedSearchField.value.value,
+        value: query.trim(),
+        page: currentPage.value,
+        size: pageInfo.value.size,
+      },
+    })
+
+    if (response.data) {
+      searchResults.value = response.data.content
+      pageInfo.value = {
+        totalPages: response.data.totalPages,
+        totalElements: response.data.totalElements,
+        size: response.data.size,
+      }
+      await Promise.all(searchResults.value.map((user) => checkFollowingStatus(user.userId)))
+    }
+  } catch (error) {
+    alertStore.showNotify('오류', '검색에 실패하였습니다.', 'error')
+    searchResults.value = []
+    pageInfo.value = { totalPages: 0, totalElements: 0, size: 10 }
+  }
+}, 300)
+
+// 탭 변경 시 검색 모드 해제
 const handleTabChange = (tab) => {
+  alertStore.showNotify('오류', '검색에 실패하였습니다.', 'error')
+  alertStore.showNotify('진짜', '이거지롱', 'success')
   activeTab.value = tab
-  if (!isSearching.value) {
-    fetchFollowData()
+  searchQuery.value = ''
+  isSearching.value = false // 검색 모드 해제
+  fetchFollowData()
+}
+
+// 페이지 변경
+const handlePageChange = (page) => {
+  currentPage.value = page
+  console.log(currentPage.value)
+  if (isSearching.value) {
+    handleSearchButton()
   }
 }
 
-// 검색어 변경 시 디바운스 처리된 검색 실행
-const debouncedSearch = debounce(handleSearch, 300)
-watch(searchQuery, () => {
-  debouncedSearch()
-})
-
-onMounted(() => {
-  fetchFollowData()
+// 검색어 변경 감시
+watch(searchQuery, (newQuery) => {
+  if (!newQuery.trim() && !isSearching.value) {
+    searchResults.value = []
+    pageInfo.value = { totalPages: 0, totalElements: 0, size: 10 }
+    return
+  }
+  if (newQuery.trim()) {
+    isSearching.value = true
+  }
+  currentPage.value = 1
+  debouncedSearch(newQuery)
 })
 </script>
