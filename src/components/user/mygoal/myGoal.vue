@@ -4,6 +4,7 @@
 <header class="mb-8 flex items-center justify-between">
       <div>
         <h1 class="font-paperlogy text-5xl font-bold text-gray-900">내 목표 관리</h1>
+        <p class="mt-2 text-sm text-gray-600">나만의 목표를 추가하거나 수정해보세요!</p>
       </div>
       <div class="flex items-center gap-4">
         <button
