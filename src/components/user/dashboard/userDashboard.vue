@@ -7,103 +7,88 @@
       </div>
       <div class="flex items-center gap-4">
         <DateRangePicker @update-date-range="handleDateRangeUpdate" />
-
       </div>
     </header>
 
     <!-- 로딩/에러/데이터 표시 -->
-    <div v-if="loading" 
-         class="flex items-center justify-center p-8 space-x-2">
-      <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-[#FF6F3B]"></div>
+    <div v-if="loading" class="flex items-center justify-center space-x-2 p-8">
+      <div class="h-8 w-8 animate-spin rounded-full border-b-2 border-[#FF6F3B]"></div>
       <span class="text-gray-500">데이터를 불러오는 중...</span>
     </div>
 
-    <div v-else-if="error" 
-         class="rounded-xl bg-red-50 p-4 text-red-700 border border-red-100 flex items-center justify-between">
+    <div
+      v-else-if="error"
+      class="flex items-center justify-between rounded-xl border border-red-100 bg-red-50 p-4 text-red-700"
+    >
       <span>{{ error }}</span>
       <button
         @click="retryFetch"
-        class="rounded-lg bg-red-600 px-4 py-2 text-white hover:bg-red-700 transition-colors duration-200 shadow-sm"
+        class="rounded-lg bg-red-600 px-4 py-2 text-white shadow-sm transition-colors duration-200 hover:bg-red-700"
       >
         다시 시도
       </button>
     </div>
 
     <div class="grid grid-cols-3 gap-6">
-  <!-- 첫 번째 열: MetricCards -->
-  <div class="space-y-4">  <!-- 카드 사이 간격을 위한 space-y-4 추가 -->
-    <div class="transform hover:scale-102 transition-all duration-200">
-      <MetricCard
-        key="exerciseTime"
-        :records="recordsMap.exerciseTime"
-        title="⏱️ 총 운동 시간"
-        subtitle="시간"
-        class="bg-white rounded-lg shadow-sm hover:shadow-md p-4"
-      />
+      <!-- 첫 번째 열: MetricCards -->
+      <div class="space-y-4">
+        <!-- 카드 사이 간격을 위한 space-y-4 추가 -->
+        <div class="hover:scale-102 transform transition-all duration-200">
+          <MetricCard
+            key="exerciseTime"
+            :records="recordsMap.exerciseTime"
+            title="⏱️ 총 운동 시간"
+            subtitle="시간"
+            class="rounded-lg bg-white p-4 shadow-sm hover:shadow-md"
+          />
+        </div>
+        <div class="hover:scale-102 transform transition-all duration-200">
+          <MetricCard
+            key="distance"
+            :records="recordsMap.distance"
+            title="🚶‍♂️ 총 이동 거리"
+            subtitle="km"
+            class="rounded-lg bg-white p-4 shadow-sm hover:shadow-md"
+          />
+        </div>
+      </div>
+
+      <!-- 두 번째 열: 연속 운동일수 -->
+      <div class="hover:scale-102 transform transition-all duration-200">
+        <MetricCardExercise
+          :records="recordsMap.exerciseTime"
+          title="💪 연속 운동일"
+          class="h-full rounded-lg bg-white shadow-sm hover:shadow-md"
+        />
+      </div>
+
+      <!-- 세 번째 열: UserGoal -->
+      <div class="hover:scale-102 transform transition-all duration-200">
+        <UserGoal
+          :title="'🎯 내 목표'"
+          subtitle="참여 챌린지 목록"
+          class="h-full rounded-lg bg-white shadow-sm hover:shadow-md"
+        />
+      </div>
     </div>
-    <div class="transform hover:scale-102 transition-all duration-200">
-      <MetricCard
-        key="distance"
-        :records="recordsMap.distance"
-        title="🚶‍♂️ 총 이동 거리"
-        subtitle="km"
-        class="bg-white rounded-lg shadow-sm hover:shadow-md p-4"
-      />
-    </div>
-  </div>
-  
-  <!-- 두 번째 열: 연속 운동일수 -->
-  <div class="transform hover:scale-102 transition-all duration-200">
-    <MetricCardExercise
-      :records="recordsMap.exerciseTime"
-      title="💪 연속 운동일"
-      class="bg-white rounded-lg shadow-sm hover:shadow-md h-full"
-    />
-  </div>
-  
-  <!-- 세 번째 열: UserGoal -->
-  <div class="transform hover:scale-102 transition-all duration-200">
-    <UserGoal 
-      :title="'🎯 내 목표'" 
-      subtitle="참여 챌린지 목록"
-      class="h-full bg-white rounded-lg shadow-sm hover:shadow-md"
-    />
-  </div>
-</div>
 
     <div class="mt-8 grid grid-cols-2 gap-8">
       <!-- LineChart -->
-      <div class="bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-200 p-1">
-        <LineChart 
-          key="heartRate" 
-          :records="recordsMap.heartRate" 
-          title="💓 심박수 (bpm)"
-        />
+      <div class="rounded-xl bg-white p-1 shadow-sm transition-all duration-200 hover:shadow-md">
+        <LineChart key="heartRate" :records="recordsMap.heartRate" title="💓 심박수 (bpm)" />
       </div>
-      <div class="bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-200 p-1">
-        <LineChart 
-          key="speed" 
-          :records="recordsMap.speed" 
-          title="💨 속도 (km/h)"
-        />
+      <div class="rounded-xl bg-white p-1 shadow-sm transition-all duration-200 hover:shadow-md">
+        <LineChart key="speed" :records="recordsMap.speed" title="💨 속도 (km/h)" />
       </div>
     </div>
 
     <div class="mt-8 grid grid-cols-2 gap-8">
       <!-- BarChart -->
-      <div class="bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-200 p-1">
-        <BarChart 
-          key="step" 
-          :records="recordsMap.step" 
-          title="👣 걸음 수"
-        />
+      <div class="rounded-xl bg-white p-1 shadow-sm transition-all duration-200 hover:shadow-md">
+        <BarChart key="step" :records="recordsMap.step" title="👣 걸음 수" />
       </div>
-      <div class="bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-200 p-1">
-        <BarChart 
-          key="calorie" 
-          :records="recordsMap.calorie" 
-          title="🔥 소비 칼로리 (kcal)"
-        />
+      <div class="rounded-xl bg-white p-1 shadow-sm transition-all duration-200 hover:shadow-md">
+        <BarChart key="calorie" :records="recordsMap.calorie" title="🔥 소비 칼로리 (kcal)" />
       </div>
     </div>
   </div>
@@ -129,8 +114,8 @@ const endDate = ref(new Date().toISOString().split('T')[0])
 const props = defineProps({
   title: {
     type: String,
-    required: true
-  }
+    required: true,
+  },
 })
 
 // 데이터 타입 정의

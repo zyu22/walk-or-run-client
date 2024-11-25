@@ -18,10 +18,6 @@
       <ActivityFeed :activities="recentActivities" />
       <UserStats :stats="userStats" />
     </div>
-
-    <div class="rounded-xl bg-white p-6 shadow-sm">
-      <ChallengeBoard />
-    </div>
   </div>
 </template>
 
