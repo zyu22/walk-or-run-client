@@ -1,9 +1,9 @@
 <template>
-  <div class="bg-white rounded-lg shadow p-6">
+  <div class="bg-white rounded-lg shadow-lg p-6">
     <div class="flex justify-between items-center mb-4">
       <h3 class="text-lg font-semibold text-gray-700">{{ title }}</h3>
       <div class="flex gap-2">
-        <button 
+        <!-- <button 
           v-for="period in timePeriods" 
           :key="period"
           @click="selectedPeriod = period"
@@ -15,7 +15,7 @@
           ]"
         >
           {{ period }}
-        </button>
+        </button> -->
       </div>
     </div>
     
@@ -68,7 +68,7 @@ const props = defineProps({
 })
 
 const timePeriods = ['Day', 'Week', 'Month']
-const selectedPeriod = ref('Day')
+const selectedPeriod = ref('Week')
 
 // 데이터 처리 함수
 const processData = (records) => {
@@ -122,20 +122,23 @@ const processData = (records) => {
     } else {
       // 다른 데이터 타입 처리 (기존 로직)
       let value = 0
-      if (record.stepCount !== undefined) {
-        value = record.stepCount
-      } else if (record.totalCalorie !== undefined) {
-        value = record.totalCalorie
-      } else if (record.distance !== undefined) {
-        value = record.distance
-      } else if (record.meanSpeed !== undefined) {
-        value = record.meanSpeed
-      } else if (record.cadence !== undefined) {
-        value = record.cadence
-      } else if (record.totalMinutes !== undefined) {
-        value = record.totalMinutes
-      }
-      acc[timeKey].mean.push(value)
+    if (record.stepCount !== undefined) {
+      value = record.stepCount
+    } else if (record.totalCalorie !== undefined) {
+      value = record.totalCalorie
+    } else if (record.distance !== undefined) {
+      value = record.distance
+    } else if (record.meanSpeed !== undefined) {
+      value = record.meanSpeed * 3.6 // m/s를 km/h로 변환
+    } else if (record.maxSpeed !== undefined) {
+      value = record.maxSpeed * 3.6 // m/s를 km/h로 변환
+    } else if (record.cadence !== undefined) {
+      value = record.cadence
+    } else if (record.totalMinutes !== undefined) {
+      value = record.totalMinutes
+    }
+    acc[timeKey].mean.push(value)
+
     }
 
     return acc
