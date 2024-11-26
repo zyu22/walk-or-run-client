@@ -79,29 +79,22 @@
               v-model="challengeForm.challengeCreateDate"
               :end-date="challengeForm.challengeDeleteDate"
               :is-start-date="true"
+              :is-end-date="false"
               placeholder="시작일 선택"
-              class="w-full rounded-lg border border-gray-300 p-3 focus:border-[#ff6f3b] focus:outline-none focus:ring-1"
+              :is-in-modal="true"
+              :modalOpen="isOpen"
             />
-            <!-- <input
-              type="date"
-              v-model="selectedCreateDate"
-              :end-date="selectedDeleteDate"
-              :is-start-date="true"
-              class="w-full rounded-lg border border-gray-300 p-3 focus:border-[#ff6f3b] focus:outline-none focus:ring-1"
-            /> -->
           </div>
           <div>
             <label class="mb-2 block text-sm font-medium text-gray-700">종료일</label>
-            <!-- <input
-              type="date"
-              v-model="selectedDeleteDate"
-              class="w-full rounded-lg border border-gray-300 p-3 focus:border-[#ff6f3b] focus:outline-none focus:ring-1"
-            /> -->
-            <Calendar
+            <Calender
               v-model="challengeForm.challengeDeleteDate"
               :start-date="challengeForm.challengeCreateDate"
+              :is-start-date="false"
               :is-end-date="true"
               placeholder="종료일 선택"
+              :is-in-modal="true"
+              :modalOpen="isOpen"
             />
           </div>
         </div>
@@ -122,17 +115,14 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
+import { ref } from 'vue'
 import { useUserStore } from '@/stores/user'
 import api from '@/api/axios'
 import Calendar from '@/components/common/Calender.vue'
-import { useValidation } from '@/components/common/Validation.js'
 import { useAlertStore } from '@/stores/alert'
+import Calender from '@/components/common/Calender.vue'
 
-const { validateDates } = useValidation()
 const alertStore = useAlertStore()
-const selectedCreateDate = ref('') // 화면에 보여줄 시작일
-const selectedDeleteDate = ref('') // 화면에 보여줄 종료일
 const props = defineProps({
   isOpen: {
     type: Boolean,
@@ -157,21 +147,7 @@ const challengeForm = ref({
 
 // API 호출 시
 const createChallenge = async () => {
-  const { isValid, message } = validateDates(
-    challengeForm.value.challengeCreateDate,
-    challengeForm.value.challengeDeleteDate,
-  )
-
   // 필수 필드 검증
-  if (!isValid) {
-    alertStore.showNotify({
-      title: '알림',
-      message,
-      type: 'error',
-      position: 'center',
-    })
-    return
-  }
   if (!challengeForm.value.challengeCategoryCode) {
     alertStore.showNotify({
       title: '알림',
@@ -210,10 +186,6 @@ const createChallenge = async () => {
   }
 
   try {
-    // 시작일과 종료일 포맷팅
-    challengeForm.value.challengeCreateDate = `${goalInfo.startDate} 00:00:00`
-    challengeForm.value.challengeDeleteDate = `${goalInfo.endDate} 23:59:59`
-
     // API 요청을 위한 데이터 정제
     const requestData = {
       challengeCategoryCode: challengeForm.value.challengeCategoryCode,
@@ -221,19 +193,45 @@ const createChallenge = async () => {
       challengeAuthorId: userStore.userId,
       challengeDescription: challengeForm.value.challengeDescription,
       challengeTargetCnt: challengeForm.value.challengeTargetCnt,
-      challengeCreateDate: challengeForm.value.challengeCreateDate,
-      challengeDeleteDate: challengeForm.value.challengeDeleteDate,
+      challengeCreateDate: `${challengeForm.value.challengeCreateDate} 00:00:00`,
+      challengeDeleteDate: `${challengeForm.value.challengeDeleteDate} 23:59:59`,
     }
 
-    const response = await api.post('/admin/challenge', requestData)
+    console.log('카테고리 코드:', requestData.challengeCategoryCode)
+    console.log('제목:', requestData.challengeTitle)
+    console.log('작성자 ID:', requestData.challengeAuthorId)
+    console.log('설명:', requestData.challengeDescription)
+    console.log('목표 수:', requestData.challengeTargetCnt)
+    console.log('생성일:', requestData.challengeCreateDate)
+    console.log('삭제일:', requestData.challengeDeleteDate)
+
+    const response = await api.post('/admin/challenge', {
+      challengeCategoryCode: challengeForm.value.challengeCategoryCode,
+      challengeTitle: challengeForm.value.challengeTitle,
+      challengeAuthorId: userStore.userId,
+      challengeDescription: challengeForm.value.challengeDescription,
+      challengeTargetCnt: challengeForm.value.challengeTargetCnt,
+      challengeCreateDate: `${challengeForm.value.challengeCreateDate} 00:00:00`,
+      challengeDeleteDate: `${challengeForm.value.challengeDeleteDate} 23:59:59`,
+    })
     if (response.status === 201) {
-      alert('챌린지가 성공적으로 등록되었습니다.')
+      alertStore.showNotify({
+        title: '알림',
+        message: '챌린지가 성공적으로 등록되었습니다.',
+        type: 'success',
+        position: 'top-right',
+      })
       emit('refresh')
       closeAddModal()
     }
   } catch (error) {
     console.error('챌린지 등록 실패:', error)
-    alert('챌린지 등록에 실패했습니다. 다시 시도해주세요.')
+    alertStore.showNotify({
+      title: '알림',
+      message: '챌린지 등록에 실패하였습니다.\n 다시 시도해주세요.',
+      type: 'error',
+      position: 'center',
+    })
   }
 }
 

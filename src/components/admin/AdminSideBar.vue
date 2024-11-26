@@ -13,7 +13,7 @@
 
         <!-- Navigation -->
         <nav class="flex-1 px-4">
-          <router-link
+          <!-- <router-link
             :to="{ name: 'adminDashboard' }"
             class="mb-2 flex items-center rounded-lg px-4 py-3 text-gray-600 transition-colors hover:bg-white"
             :class="{
@@ -22,7 +22,7 @@
           >
             <span class="mr-3">📊</span>
             Dashboard
-          </router-link>
+          </router-link> -->
 
           <router-link
             :to="{ name: 'adminUser' }"
@@ -82,7 +82,7 @@
 
         <!-- Bottom Items -->
         <div class="p-4">
-          <router-link
+          <!-- <router-link
             :to="{ name: 'uploadDefault' }"
             class="mb-2 flex items-center rounded-lg px-4 py-3 text-gray-600 transition-colors hover:bg-white"
             :class="{
@@ -91,7 +91,7 @@
           >
             <span class="mr-3">📤</span>
             Upload
-          </router-link>
+          </router-link> -->
 
           <button
             @click="handleLogout"
@@ -109,9 +109,10 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import { useAlertStore } from '@/stores/alert'
 
 const emit = defineEmits(['logout'])
-
+const alertStore = useAlertStore()
 const router = useRouter()
 const route = useRoute()
 const isChallengeOpen = ref(false)
@@ -125,6 +126,15 @@ const toggleChallenge = () => {
 }
 
 const handleLogout = () => {
-  emit('logout')
+  alertStore.showConfirm({
+    title: '확인',
+    message: '로그아웃 하시겠습니까?',
+    onConfirm: async () => {
+      emit('logout')
+    },
+    onCancel: () => {
+      return
+    },
+  })
 }
 </script>

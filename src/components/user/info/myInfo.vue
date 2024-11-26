@@ -107,6 +107,7 @@ const alertStore = useAlertStore()
 const isCheckingNickname = ref(false)
 const isNicknameAvailable = ref(false)
 const nicknameMessage = ref('')
+const originalNickname = ref('')
 
 const userStore = useUserStore()
 const userInfo = reactive({
@@ -118,7 +119,10 @@ const userInfo = reactive({
 
 // 유저 정보 수정
 const updateUserInfo = async () => {
-  if (!isNicknameAvailable.value && userInfo.nickname !== userStore.userNickname) {
+  console.log(userInfo.nickname)
+  console.log(originalNickname.value)
+
+  if (!isNicknameAvailable.value && userInfo.nickname !== originalNickname.value) {
     nicknameMessage.value = '닉네임 중복확인을 해주세요.'
     return
   }
@@ -132,12 +136,22 @@ const updateUserInfo = async () => {
     })
 
     if (response.status === 200) {
-      alertStore.showNotify('성공', '정보가 성공적으로 수정되었습니다.', 'success', 'top-right')
+      alertStore.showNotify({
+        title: '알림',
+        message: '정보가 성공적으로 수정되었습니다.',
+        type: 'success',
+        position: 'top-right',
+      })
       await getUserInfo()
     }
   } catch (error) {
     console.error('정보 업데이트 실패:', error)
-    alertStore.showNotify('오류', '정보 수정에 실패하였습니다.', 'error', 'top-right')
+    alertStore.showNotify({
+      title: '알림',
+      message: '정보 수정에 실패하였습니다.',
+      type: 'error',
+      position: 'top-right',
+    })
   }
 }
 
@@ -183,6 +197,8 @@ const getUserInfo = async () => {
       userInfo.nickname = response.data.userNickname
       userInfo.phoneNumber = response.data.userPhoneNumber
     }
+
+    originalNickname.value = response.data.userNickname
   } catch (error) {
     alertStore.showNotify({
       title: '알림',

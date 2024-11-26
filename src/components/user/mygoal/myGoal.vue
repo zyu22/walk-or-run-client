@@ -1,4 +1,3 @@
-<!-- components/user/MyGoals.vue -->
 <template>
   <header class="mb-8 flex items-center justify-between">
     <div>
@@ -25,28 +24,13 @@
           v-for="goal in goals"
           :key="goal.userGoalId"
           class="my-5 rounded-lg border p-4 transition-all hover:border-orange-500"
+          @click="showDetail(goal)"
         >
           <div class="flex items-center justify-between">
             <h3 class="font-medium text-gray-800">
               {{ goal.challengeCategoryName }}
             </h3>
-            <button
-              @click="showDetail(goal)"
-              class="flex h-8 w-8 items-center justify-center rounded-full text-gray-400 transition-colors hover:bg-orange-50 hover:text-orange-500"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="h-5 w-5"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-              >
-                <path
-                  fill-rule="evenodd"
-                  d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
-                  clip-rule="evenodd"
-                />
-              </svg>
-            </button>
+
           </div>
           <div class="mt-2 space-y-2">
             <div class="flex justify-between text-sm">
@@ -97,7 +81,7 @@ import myGoalDetail from '@/components/user/mygoal/myGoalDetail.vue'
 const userStore = useUserStore()
 const goals = ref([])
 const isModalOpen = ref(false)
-const selectedGoal = ref(null) // 추가: 선택된 목표 상태
+const selectedGoal = ref(null)
 
 const fetchGoals = async () => {
   try {
@@ -107,19 +91,16 @@ const fetchGoals = async () => {
       },
     })
     goals.value = response.data
-    console.log(goals.value)
   } catch (error) {
     console.error('Error fetching goals:', error)
   }
 }
 
-// 추가: 상세보기 모달 열기
 const showDetail = (goal) => {
-  console.log('Showing detail for goal:', goal)
   selectedGoal.value = goal
 }
 
-// 추가: 상세보기 모달 닫기
+
 const closeDetail = () => {
   selectedGoal.value = null
 }
@@ -150,7 +131,6 @@ const calculateTimeProgress = (startDate, endDate) => {
 
 // 출력 형식 계산
 const printType = (challengeCategoryUnitName) => {
-  console.log(challengeCategoryUnitName.split('(')[1])
   return challengeCategoryUnitName.split('(')[1].split(')')[0]
 }
 

@@ -54,23 +54,26 @@
         <div class="grid grid-cols-2 gap-4">
           <div class="flex flex-col space-y-1">
             <label class="block text-sm">시작일</label>
+
             <Calendar
               v-model="goalInfo.startDate"
               :end-date="goalInfo.endDate"
               :is-start-date="true"
+              :is-in-modal="true"
+              :modalOpen="isOpen"
               placeholder="시작일 선택"
             />
-            <p class="mt-1 text-xs text-gray-500">
-              미입력 시 현재 날짜의 00:00으로 자동 설정됩니다
-            </p>
           </div>
 
           <div class="flex flex-col space-y-1">
             <label class="block text-sm">종료일</label>
+
             <Calendar
               v-model="goalInfo.endDate"
               :start-date="goalInfo.startDate"
               :is-end-date="true"
+              :is-in-modal="true"
+              :modalOpen="isOpen"
               placeholder="종료일 선택"
             />
           </div>
@@ -78,13 +81,6 @@
 
         <!-- 버튼 그룹 -->
         <div class="flex justify-end space-x-3 pt-4">
-          <button
-            type="button"
-            @click="closeModal"
-            class="rounded-lg border px-4 py-2 hover:bg-gray-50"
-          >
-            취소
-          </button>
           <button
             type="submit"
             class="rounded-lg bg-orange-500 px-4 py-2 text-white hover:bg-orange-600"
@@ -105,7 +101,7 @@ import { useAlertStore } from '@/stores/alert'
 import Calendar from '@/components/common/Calender.vue'
 import { useValidation } from '@/components/common/Validation.js'
 
-const { isStartDateValid, isEndDateValid, validateDates } = useValidation()
+const { validateDates } = useValidation()
 const alertStore = useAlertStore()
 const props = defineProps({
   isOpen: {
