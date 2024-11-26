@@ -43,7 +43,7 @@
           건강하고 활동적인 삶을 향한 여정의 시작, 운동 대시보드와 함께 하세요.
         </p>
         <button
-          :to="{ name: 'login' }"
+          @click="$router.push({ name: 'login' })"
           class="transform rounded-full bg-blue-500 px-8 py-4 font-bold text-white shadow-lg transition duration-300 hover:scale-105 hover:bg-blue-600"
         >
           로그인
@@ -58,23 +58,15 @@
   </div>
 </template>
 
-<script>
+<script setup>
+import { useRouter } from 'vue-router'
 import WorkoutLog from '@/components/authentication/WorkoutLog.vue'
 import ChallengeParticipation from '@/components/authentication/ChallengeParticipation.vue'
 import GoalSetting from '@/components/authentication/GoalSetting.vue'
+import { ref } from 'vue'
 
-export default {
-  components: {
-    WorkoutLog,
-    ChallengeParticipation,
-    GoalSetting,
-  },
-  data() {
-    return {
-      activeSection: 0,
-    }
-  },
-}
+const router = useRouter()
+const activeSection = ref(0)
 </script>
 
 <style scoped>

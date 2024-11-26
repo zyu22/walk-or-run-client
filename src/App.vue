@@ -2,10 +2,11 @@
   <ConfirmModal />
   <NotifyModal />
   <div>
-    <!-- 로그인하지 않은 경우: 로그인 화면 -->
-    <AuthenticationView v-if="!isLoggedIn" />
+    <!-- 로그인하지 않은 경우 -->
+    <template v-if="!isLoggedIn">
+      <RouterView />
+    </template>
 
-    <Login v-if="!isLoggedIn" />
     <!-- 로그인한 경우: 역할에 따른 레이아웃 -->
     <div v-else class="mt-6 flex h-[calc(100vh-3rem)]">
       <!-- ADMIN인 경우 -->
@@ -30,7 +31,7 @@
 
 <script setup>
 import { computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import api from '@/api/axios'
 import Login from '@/views/AuthenticationView.vue'
@@ -39,11 +40,15 @@ import AdminSidebar from '@/components/admin/AdminSideBar.vue'
 import Footer from '@/components/footer.vue'
 import NotifyModal from '@/components/common/NotifyModal.vue'
 import ConfirmModal from '@/components/common/ConfirmModal.vue'
-import AuthenticationView from '@/components/authentication/AuthenticationView.vue'
-
+import AuthenticationView from '@/components/authentication/Authentication.vue'
+const route = useRoute()
 const router = useRouter()
 const userStore = useUserStore()
 
+// 현재 경로가 auth인지 확인
+const isAuthPath = computed(() => route.path === '/' || route.path === '/auth')
+// 현재 경로가 login인지 확인
+const isLoginPath = computed(() => route.path === '/login')
 const isLoggedIn = computed(() => !!userStore.userId)
 const isAdmin = computed(() => userStore.userRole === 'ADMIN')
 
