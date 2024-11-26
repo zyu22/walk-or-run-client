@@ -1,8 +1,15 @@
 <template>
+  <header class="mb-8 flex items-center justify-between">
+      <div>
+        <h1 class="font-paperlogy text-5xl font-bold text-gray-900">사용자 관리</h1>
+        <p class="mt-2 text-sm text-gray-600">사용자에게 관리자 권한을 줄 수 있어요!</p>
+      </div>
+      <div class="flex items-center gap-4">
+        <DateRangePicker @update-date-range="handleDateRangeUpdate" />
+      </div>
+    </header>
   <div class="flex w-full items-center justify-center">
     <div class="mx-auto w-3/5 pt-1">
-      <h1 class="font-paperlogy text-5xl font-bold text-gray-900">사용자 관리</h1>
-      <p class="mb-8 mt-2 text-sm text-gray-600">사용자에게 관리자 권한을 줄 수 있어요!</p>
       <div class="mb-8">
         <!-- 에러 메시지 표시 -->
         <div v-if="error" class="mb-4 rounded-lg bg-red-50 p-4 text-red-600">
@@ -49,7 +56,7 @@
             v-model="searchQuery"
             type="text"
             placeholder="유저 검색"
-            class="flex-1 rounded-lg border border-gray-200 px-4 py-3 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
+            class="flex-1 rounded-lg border border-gray-200 px-4 py-3 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-200"
             ref="searchInput"
           />
         </div>
@@ -81,7 +88,7 @@
       </span>
     </div>
     <div class="flex items-center gap-2">
-      <span class="text-sm" :class="user.userRole === 'ADMIN' ? 'text-purple-600 font-medium' : 'text-gray-600'">
+      <span class="text-sm" :class="user.userRole === 'ADMIN' ? 'text-orange-600 font-medium' : 'text-gray-600'">
         {{ user.userRole === 'ADMIN' ? '관리자' : '일반 사용자' }}
       </span>
       <button
@@ -89,7 +96,7 @@
       :disabled="user.userRole === 'ADMIN' || isActionLoading"
       class="relative inline-flex h-6 w-11 items-center rounded-full"
       :class="{ 
-        'bg-purple-600': user.userRole === 'ADMIN',
+        'bg-orange-600': user.userRole === 'ADMIN',
         'bg-gray-200 hover:bg-gray-300': user.userRole !== 'ADMIN'
       }"
     >
