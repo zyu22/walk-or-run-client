@@ -2,6 +2,7 @@
   <div
     class="fixed inset-0 z-50 flex items-center justify-center overflow-hidden bg-black bg-opacity-50"
     v-if="challengeDetail"
+    @click.self="$emit('close')"
   >
     <div class="modal-container w-full max-w-2xl overflow-y-auto rounded-lg bg-white p-8">
       <!-- 헤더 -->
@@ -33,14 +34,10 @@
             class="w-full rounded-lg border border-gray-300 p-3 focus:border-[#ff6f3b] focus:outline-none focus:ring-1"
           >
             <!-- 첫 번째 옵션: 현재 CategoryCode와 Name -->
-            <option :value="challengeDetail.challengeCategoryCode">
-              {{ challengeDetail.challengeCategoryName }}
-            </option>
+            <option :value="1">뛰거나</option>
 
             <!-- 두 번째 옵션: 반대 CategoryCode와 해당 Name -->
-            <option :value="challengeDetail.challengeCategoryCode === 1 ? 2 : 1">
-              {{ challengeDetail.challengeCategoryCode === 1 ? '걷거나' : '뛰거나' }}
-            </option>
+            <option :value="2">걷거나</option>
           </select>
         </div>
 
@@ -88,34 +85,49 @@
         <div class="grid grid-cols-2 gap-4">
           <div>
             <label class="mb-2 block text-sm font-medium text-gray-700">시작일</label>
-            <input
-              type="date"
+            <Calender
               v-model="challengeDetail.challengeCreateDate"
-              class="w-full rounded-lg border border-gray-300 p-3 focus:border-[#ff6f3b] focus:outline-none focus:ring-1"
+              :end-date="challengeDetail.challengeDeleteDate"
+              :is-start-date="true"
+              :is-end-date="false"
+              placeholder="시작일 선택"
+              :is-in-modal="true"
+              :modal-open="!!challengeDetail"
             />
           </div>
           <div>
             <label class="mb-2 block text-sm font-medium text-gray-700">종료일</label>
-            <input
-              type="date"
+            <Calender
               v-model="challengeDetail.challengeDeleteDate"
-              class="w-full rounded-lg border border-gray-300 p-3 focus:border-[#ff6f3b] focus:outline-none focus:ring-1"
+              :start-date="challengeDetail.challengeCreateDate"
+              :is-start-date="false"
+              :is-end-date="true"
+              placeholder="종료일 선택"
+              :is-in-modal="true"
+              :modal-open="!!challengeDetail"
             />
           </div>
         </div>
         <!-- 버튼 그룹 -->
         <div class="flex justify-center space-x-4 pt-4">
           <button
+            @click="updateChallenge"
             type="submit"
             class="rounded-lg bg-orange-500 px-6 py-2 text-white transition-colors hover:bg-orange-600"
           >
             수정
           </button>
           <button
-            type="submit"
-            class="rounded-lg bg-black px-6 py-2 text-white transition-colors hover:bg-gray-600"
+            @click="deleteChallenge"
+            :disabled="props.challengeDetail.challengeIsEnded === 1"
+            class="rounded-lg px-6 py-2 text-white"
+            :class="
+              props.challengeDetail.challengeIsEnded === 1
+                ? 'bg-gray-300'
+                : 'bg-black transition-colors hover:bg-gray-600'
+            "
           >
-            삭제
+            {{ props.challengeDetail.challengeIsEnded === 1 ? '종료된 챌린지' : '종료' }}
           </button>
         </div>
 
@@ -200,9 +212,13 @@
   </div>
 </template>
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
+import Calender from '@/components/common/Calender.vue'
 import { useUserStore } from '@/stores/user'
+import { useAlertStore } from '@/stores/alert'
 import api from '@/api/axios'
+
+const alertStore = useAlertStore()
 
 // 1. 먼저 props 정의
 const props = defineProps({
@@ -212,6 +228,10 @@ const props = defineProps({
   challengeId: {
     type: [String, Number],
     required: true,
+  },
+  modalOpen: {
+    type: Boolean,
+    default: false,
   },
   challengeType: {
     type: String,
@@ -252,10 +272,6 @@ const commentPageInfo = ref(
 const currentPage = ref(1)
 const isCommentsLoading = ref(false)
 
-// 상태 변수
-const isLoading = ref(false) // 로딩 상태 추적
-const isJoined = ref(false) // 참여 여부 추적
-
 // 5. 함수들 정의
 const loadComments = async (page) => {
   isCommentsLoading.value = true
@@ -284,71 +300,139 @@ const loadComments = async (page) => {
 // 챌린지 수정
 const updateChallenge = async () => {
   // 필수 필드 검증
-  if (!challengeDetail.challengeCategoryCode) {
-    alert('카테고리를 선택해주세요.')
+  if (!props.challengeDetail.challengeCategoryCode) {
+    alertStore.showNotify({
+      title: '알림',
+      message: '카테고리를 선택해주세요.',
+      type: 'error',
+      position: 'center',
+    })
     return
   }
-  if (!challengeDetail.challengeTitle) {
-    alert('챌린지 제목을 입력해주세요.')
+  if (!props.challengeDetail.challengeTitle) {
+    alertStore.showNotify({
+      title: '알림',
+      message: '챌린지 제목을 입력해주세요.',
+      type: 'error',
+      position: 'center',
+    })
     return
   }
-  if (!challengeDetail.challengeDescription) {
-    alert('챌린지 내용을 입력해주세요.')
+  if (!props.challengeDetail.challengeDescription) {
+    alertStore.showNotify({
+      title: '알림',
+      message: '챌린지 내용을 입력해주세요.',
+      type: 'error',
+      position: 'center',
+    })
     return
   }
-  if (!challengeDetail.challengeTargetCnt) {
-    alert('목표 인원을 입력해주세요.')
-    return
-  }
-  if (!challengeDetail.challengeDeleteDate) {
-    alert('종료일을 입력해주세요.')
+  if (!props.challengeDetail.challengeTargetCnt) {
+    alertStore.showNotify({
+      title: '알림',
+      message: '목표 인원을 입력해주세요.',
+      type: 'error',
+      position: 'center',
+    })
     return
   }
 
   try {
-    await api.put(`/admin/challenge/${props.challengeId}`, {
-      commentContent: editingCommentContent.value,
+    const response = await api.put(`/admin/challenge/${props.challengeDetail.challengeId}`, {
+      challengeCategoryCode: props.challengeDetail.challengeCategoryCode,
+      challengeTitle: props.challengeDetail.challengeTitle,
+      challengeDescription: props.challengeDetail.challengeDescription,
+      challengeTargetCnt: props.challengeDetail.challengeTargetCnt,
+      challengeCreateDate: `${props.challengeDetail.challengeCreateDate} 00:00:00`,
+      challengeDeleteDate: `${props.challengeDetail.challengeDeleteDate} 23:59:59`,
     })
 
-    console.log(currentPage.value)
-
-    // 댓글 목록 새로고침
-    await loadComments(currentPage.value)
-
-    // 수정 모드 종료
-    cancelEdit()
+    if (response.status === 200) {
+      alertStore.showNotify({
+        title: '알림',
+        message: '챌린지 수정에 성공하였습니다.',
+        type: 'success',
+        position: 'top-right',
+      })
+    }
   } catch (error) {
-    console.error('댓글 수정 실패:', error)
-    alert('댓글 수정에 실패했습니다.')
+    console.error('챌린지 수정 실패:', error)
+    alertStore.showNotify({
+      title: '알림',
+      message: '챌린지 수정에 실패하였습니다.\n 다시 시도해주세요.',
+      type: 'error',
+      position: 'center',
+    })
   }
 }
 
 // 챌린지 삭제
-const deleteChallenge = async (commentId) => {
-  if (!confirm('댓글을 삭제하시겠습니까?')) return
+const deleteChallenge = async () => {
+  alertStore.showConfirm({
+    title: '확인',
+    message: '챌린지를 종료 하시겠습니까?',
+    onConfirm: async () => {
+      try {
+        await api.delete(`/admin/challenge/${props.challengeDetail.challengeId}`)
 
-  try {
-    await api.delete(`/challenge/${props.challengeId}/comment/${commentId}`)
-    // 댓글 목록 새로고침
-    await loadComments(currentPage.value)
-  } catch (error) {
-    console.error('댓글 삭제 실패:', error)
-    alert('댓글 삭제에 실패했습니다.')
-  }
+        // 성공 알림
+        alertStore.showNotify({
+          title: '알림',
+          message: '챌린지가 종료되었습니다.',
+          type: 'success',
+          position: 'top-right',
+        })
+
+        emit('close')
+        emit('refresh')
+      } catch (error) {
+        console.error('챌린지 종료 실패:', error)
+        alertStore.showNotify({
+          title: '알림',
+          message: '챌린지의 종료에 실패했습니다. \n 다시 시도해주세요.',
+          type: 'error',
+          position: 'center',
+        })
+      }
+    },
+    onCancel: () => {
+      return
+    },
+  })
 }
 
-// 댓글 삭제 (기존 함수 수정)
+// 댓글 삭제
 const deleteComment = async (commentId) => {
-  if (!confirm('댓글을 삭제하시겠습니까?')) return
-
-  try {
-    await api.delete(`/challenge/${props.challengeId}/comment/${commentId}`)
-    // 댓글 목록 새로고침
-    await loadComments(currentPage.value)
-  } catch (error) {
-    console.error('댓글 삭제 실패:', error)
-    alert('댓글 삭제에 실패했습니다.')
-  }
+  alertStore.showConfirm({
+    title: '확인',
+    message: '댓글을 삭제하시겠습니까?',
+    onConfirm: async () => {
+      // async 추가
+      try {
+        await api.delete(`/challenge/${props.challengeId}/comment/${commentId}`)
+        // 댓글 목록 새로고침
+        await loadComments(currentPage.value)
+        // 성공 알림
+        alertStore.showNotify({
+          title: '알림',
+          message: '댓글이 삭제되었습니다.',
+          type: 'success',
+          position: 'top-right',
+        })
+      } catch (error) {
+        console.error('댓글 삭제 실패:', error)
+        alertStore.showNotify({
+          title: '오류',
+          message: '댓글 삭제에 실패했습니다.',
+          type: 'error',
+          position: 'center',
+        })
+      }
+    },
+    onCancel: () => {
+      return
+    },
+  })
 }
 
 // 댓글 추가
@@ -370,37 +454,19 @@ const addComment = async () => {
   }
 }
 
-const joinChallenge = async () => {
-  if (!userStore.userId || !props.challengeDetail?.challengeId) return
-
-  isLoading.value = true
-  try {
-    const response = await api.post(`challenge/${props.challengeDetail.challengeId}`, {
-      userId: userStore.userId,
-    })
-
-    if (response.status === 200) {
-      isJoined.value = true
-      if (props.challengeDetail) {
-        props.challengeDetail.challengeIsParticipant = 1
-      }
-    }
-  } catch (error) {
-    console.error('챌린지 참여 실패:', error)
-  } finally {
-    isLoading.value = false
+const handleEscape = (e) => {
+  if (e.key === 'Escape' && props.challengeDetail) {
+    emit('close')
   }
 }
 
-const getChallengeTypeColor = (type) => {
-  const colors = {
-    일일: 'bg-orange-100 text-orange-600',
-    주간: 'bg-green-100 text-green-600',
-    월간: 'bg-blue-100 text-blue-600',
-    이벤트: 'bg-purple-100 text-purple-600',
-  }
-  return colors[type] || 'bg-gray-100 text-gray-600'
-}
+onMounted(() => {
+  window.addEventListener('keydown', handleEscape)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleEscape)
+})
 </script>
 
 <style scoped>

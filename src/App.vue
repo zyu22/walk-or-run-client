@@ -6,7 +6,6 @@
     <!-- 로그인하지 않은 경우: 로그인 화면 -->
     <RouterView v-if="!isLoggedIn" />
 
-    <!-- <Login v-if="!isLoggedIn" /> -->
     <!-- 로그인한 경우: 역할에 따른 레이아웃 -->
     <div v-else class="mt-6 flex h-[calc(100vh-3rem)]">
       <!-- ADMIN인 경우 -->

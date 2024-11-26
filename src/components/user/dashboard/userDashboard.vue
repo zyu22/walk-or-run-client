@@ -104,6 +104,9 @@ import LineChart from '@/components/user/dashboard/lineChart.vue'
 import MetricCard from '@/components/user/dashboard/metricCard.vue'
 import UserGoal from '@/components/user/dashboard/userGoal.vue'
 import MetricCardExercise from './metricCardExercise.vue'
+import { useAlertStore } from '@/stores/alert'
+
+const alertStore = useAlertStore()
 
 const userStore = useUserStore()
 const loading = ref(false)
@@ -157,12 +160,6 @@ const fetchData = async (dataType) => {
 
     // 응답 데이터가 배열인지 확인하고 초기화
     recordsMap.value[dataType.key] = Array.isArray(response.data) ? response.data : []
-
-    console.log(`Fetched ${dataType.label} data:`, recordsMap.value[dataType.key])
-
-    if (!recordsMap.value[dataType.key].length) {
-      console.log(`No ${dataType.label} data available for selected period`)
-    }
   } catch (err) {
     console.error(`Failed to fetch ${dataType.label} data:`, err)
     error.value = `${dataType.label} 데이터 로딩 실패: ${
@@ -180,7 +177,6 @@ const fetchAllData = async () => {
   try {
     await Promise.all(dataTypes.map((type) => fetchData(type)))
   } catch (err) {
-    console.error('Failed to fetch all data:', err)
     error.value = '데이터 로딩 실패'
   } finally {
     loading.value = false

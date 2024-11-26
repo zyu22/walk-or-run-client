@@ -252,8 +252,10 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useAlertStore } from '@/stores/alert'
 import api from '@/api/axios'
 
+const alertStore = useAlertStore()
 const router = useRouter()
 const showPassword = ref(false)
 const showTermsModal = ref(false)
@@ -321,7 +323,13 @@ const checkEmailDuplicate = async () => {
     }
   } catch (error) {
     console.error('이메일 중복 확인 실패:', error)
-    alert('이메일 중복 확인에 실패했습니다. 다시 시도해주세요.')
+    alertStore.showNotify({
+      title: '알림',
+      message: '중복 확인에 실패했습니다. \n 다시 시도해주세요.',
+      type: 'error',
+      position: 'center',
+    })
+    return
   } finally {
     isLoading.value = false
   }
@@ -390,29 +398,49 @@ const validatePhoneNumber = () => {
 const createUser = async () => {
   try {
     if (!isNicknameAvailable.value) {
-      alert('닉네임 중복 확인을 해주세요.')
+      alertStore.showNotify({
+        title: '알림',
+        message: '닉네임 중복확인을 해주세요.',
+        type: 'error',
+        position: 'center',
+      })
       return
     }
 
     if (!isEmailAvailable.value) {
-      alert('이메일 중복 확인을 해주세요.')
+      alertStore.showNotify({
+        title: '알림',
+        message: '이메일 중복확인을 해주세요.',
+        type: 'error',
+        position: 'center',
+      })
       return
     }
 
     if (signupInfo.password !== signupInfo.confirmPassword) {
-      alert('비밀번호가 일치하지 않습니다.')
+      alertStore.showNotify({
+        title: '알림',
+        message: '비밀번호가 일치하지 않습니다.',
+        type: 'error',
+        position: 'center',
+      })
       return
     }
 
     const phonePattern = /^010\d{8}$/
     if (!phonePattern.test(signupInfo.phoneNumber)) {
-      alert('올바른 전화번호 형식이 아닙니다')
+      alertStore.showNotify({
+        title: '알림',
+        message: '올바른 전화번호 형식이 아닙니다.',
+        type: 'error',
+        position: 'center',
+      })
       return
     }
 
     const response = await api.post('auth/register', {
       userName: signupInfo.name,
-      userPassword: signupInfo.password,
+      userPassword: signupInfo.password.trim(),
       userEmail: signupInfo.email,
       userNickname: signupInfo.nickname,
       userPhoneNumber: signupInfo.phoneNumber,
@@ -421,10 +449,20 @@ const createUser = async () => {
     })
 
     if (response.status == 201) {
-      alert('회원가입에 성공하였습니다.')
+      alertStore.showNotify({
+        title: '알림',
+        message: '회원가입에 성공하였습니다.',
+        type: 'success',
+        position: 'top-right',
+      })
       router.push({ name: 'login' })
     } else if (response.status == 400) {
-      alert('존재하는 회원입니다.')
+      alertStore.showNotify({
+        title: '알림',
+        message: '존재하는 회원입니다.',
+        type: 'error',
+        position: 'top-right',
+      })
       router.push({ name: 'login' })
     }
   } catch (error) {

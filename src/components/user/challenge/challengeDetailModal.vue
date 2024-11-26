@@ -354,7 +354,7 @@ const updateComment = async (commentId) => {
   } catch (error) {
     console.error('댓글 수정 실패:', error)
     alertStore.showNotify({
-      title: '오류',
+      title: '알림',
       message: '댓글 수정에 실패했습니다.',
       type: 'error',
       position: 'center',
@@ -377,7 +377,7 @@ const addComment = async () => {
   } catch (error) {
     console.error('댓글 작성 실패:', error)
     alertStore.showNotify({
-      title: '오류',
+      title: '알림',
       message: '댓글 작성에 실패했습니다.',
       type: 'error',
       position: 'center',
@@ -417,7 +417,7 @@ const joinChallenge = async () => {
   } catch (error) {
     console.error('챌린지 참여 실패:', error)
     alertStore.showNotify({
-      title: '오류',
+      title: '알림',
       message: '챌린지 참여에 실패했습니다.',
       type: 'error',
       position: 'center',

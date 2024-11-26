@@ -79,9 +79,12 @@
 import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '@/api/axios'
+import { useAlertStore } from '@/stores/alert'
 const router = useRouter()
 const isLoading = ref(false)
 const foundEmail = ref(null)
+
+const alertStore = useAlertStore()
 
 const findForm = reactive({
   name: '',
@@ -100,10 +103,18 @@ const getuserEmail = async () => {
       userPhoneNumber: findForm.phoneNumber,
     })
 
+    console.log(response)
     if (response.status === 200) {
       foundEmail.value = response.data
     } else {
       foundEmail.value = false
+      alertStore.showNotify({
+        title: '알림',
+        message: '존재하는 이메일이 없습니다.',
+        type: 'error',
+        position: 'center',
+      })
+      return
     }
   } catch (error) {
     console.error('에러 상세:', {

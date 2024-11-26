@@ -113,7 +113,7 @@ const routes = [
     component: AdminView,
     children: [
       {
-        path: '',
+        path: 'challenge', // challenge 경로 명시적 추가
         name: 'adminChallenge',
         component: settingChallenge,
       },
@@ -147,7 +147,6 @@ const router = createRouter({
   history: createWebHistory(),
   routes,
 })
-
 router.beforeEach((to, from, next) => {
   const accessToken = localStorage.getItem('accessToken')
   const userStore = useUserStore()
@@ -161,16 +160,18 @@ router.beforeEach((to, from, next) => {
     }
   }
 
-  // 로그인이 필요한 페이지 접근 제어
-  if (!accessToken && to.path.startsWith('/user')) {
-    return next({ name: 'login' })
-  }
-
-  // admin 경로 접근 제어
   if (to.path.startsWith('/admin')) {
     if (userStore.userRole !== 'ADMIN') {
       return next({ name: 'userDashboard' })
     }
+
+    // 정확히 /admin일 때만 challenge로 리다이렉트
+    if (to.path === '/admin') {
+      return next({ name: 'adminChallenge' })
+    }
+
+    // 다른 admin 하위 경로는 그대로 유지
+    return next()
   }
 
   return next()
