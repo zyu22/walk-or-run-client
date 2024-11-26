@@ -50,8 +50,8 @@
         @click="openChallengeModal(challenge)"
         class="group cursor-pointer rounded-lg bg-white p-6 shadow-sm transition-all hover:shadow-md"
         :class="{
-          'opacity-75': challenge.dday === '종료',
-          'border border-gray-200': challenge.dday === '종료',
+          'opacity-75': challenge.challengeIsEnded === 1,
+          'border border-gray-200': challenge.challengeIsEnded === 1,
         }"
       >
         <div class="mb-4 flex items-start justify-between">
@@ -67,8 +67,8 @@
         <h3
           class="mb-2 text-lg font-semibold"
           :class="{
-            'text-gray-900 group-hover:text-[#ff6f3b]': challenge.dday !== '종료',
-            'text-gray-400': challenge.dday === '종료',
+            'text-gray-900 group-hover:text-[#ff6f3b]': challenge.challengeIsEnded !== 1,
+            'text-gray-400': challenge.challengeIsEnded === 1,
           }"
         >
           {{ challenge.challengeTitle }}
@@ -76,8 +76,8 @@
         <p
           class="mb-4 text-sm"
           :class="{
-            'text-gray-600': challenge.dday !== '종료',
-            'text-gray-400': challenge.dday === '종료',
+            'text-gray-600': challenge.challengeIsEnded !== 1,
+            'text-gray-400': challenge.challengeIsEnded === 1,
           }"
         >
           {{ challenge.challengeDescription }}
@@ -183,6 +183,13 @@ const handleStatusChange = (status) => {
   console.log('status: ', status)
   filterStatus.value = status
 
+  let apiEndpoint = '/challenge'
+  if (status === '진행중인 챌린지') {
+    apiEndpoint = '/challenge/active' // challengeIsEnded === 0
+  } else if (status === '종료된 챌린지') {
+    apiEndpoint = '/challenge/end' // challengeIsEnded === 1
+  }
+
   getChallege() // 필터 상태 변경 시 API 호출
 }
 
@@ -232,6 +239,7 @@ const getChallege = async (page = 1) => {
       },
     })
     // 응답 데이터 구조 확인
+
     console.log('API Response:', response.data)
     challenges.value = response.data.content
     pageInfo.value = response.data.pageInfo

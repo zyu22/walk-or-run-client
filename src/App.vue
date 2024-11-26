@@ -34,13 +34,11 @@ import { computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import api from '@/api/axios'
-import Login from '@/views/AuthenticationView.vue'
 import Sidebar from '@/components/user/userSidebar.vue'
 import AdminSidebar from '@/components/admin/AdminSideBar.vue'
 import Footer from '@/components/footer.vue'
 import NotifyModal from '@/components/common/NotifyModal.vue'
 import ConfirmModal from '@/components/common/ConfirmModal.vue'
-// import AuthenticationView from '@/components/authentication/AuthenticationView.vue'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -74,7 +72,7 @@ const checkLoginStatus = async () => {
       // userRole에 따른 리다이렉트
       if (userStore.userRole === 'ADMIN') {
         if (!router.currentRoute.value.path.startsWith('/admin')) {
-          router.push({ name: 'adminDashboard' })
+          router.push({ name: 'adminChallenge' })
         }
       } else if (userStore.userRole === 'USER') {
         if (router.currentRoute.value.path.startsWith('/admin')) {

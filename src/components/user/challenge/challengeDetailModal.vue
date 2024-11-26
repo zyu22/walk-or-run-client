@@ -73,12 +73,13 @@
             </div>
           </div>
 
+          <!-- 참여 버튼 -->
           <div class="mt-6">
             <button
               @click="handleParticipation"
               class="w-full rounded-lg px-4 py-2 text-white transition-colors"
               :class="buttonClass"
-              :disabled="isEnded"
+              :disabled="isButtonDisabled"
             >
               {{ buttonText }}
             </button>
@@ -184,9 +185,9 @@
             <button
               @click="addComment"
               class="w-full rounded-lg bg-black px-4 py-2 text-white transition-colors hover:bg-gray-400"
-              :disabled="newComment.trim() === ''"
+              :disabled="isCommentDisabled"
             >
-              댓글 작성
+              {{ isEnded ? '종료된 챌린지입니다' : '댓글 작성' }}
             </button>
           </div>
         </div>
@@ -310,7 +311,7 @@ const deleteComment = (commentId) => {
         await loadComments(currentPage.value)
         // 성공 알림
         alertStore.showNotify({
-          title: '성공',
+          title: '알림',
           message: '댓글이 삭제되었습니다.',
           type: 'success',
           position: 'top-right',
@@ -363,7 +364,7 @@ const updateComment = async (commentId) => {
 
 // 댓글 추가
 const addComment = async () => {
-  if (newComment.value.trim() === '') return
+  if (isEnded.value || newComment.value.trim() === '') return
 
   try {
     await api.post(`/challenge/${props.challengeId}/comment`, {
@@ -371,7 +372,6 @@ const addComment = async () => {
       commentAuthorId: userStore.userId,
     })
 
-    // 댓글 목록 새로고침
     await loadComments(currentPage.value)
     newComment.value = ''
   } catch (error) {
@@ -408,7 +408,7 @@ const joinChallenge = async () => {
           (props.challengeDetail.challengeParticipantCnt || 0) + 1
       }
       alertStore.showNotify({
-        title: '성공',
+        title: '알림',
         message: '챌린지 참여가 완료되었습니다.',
         type: 'success',
         position: 'top-right',
@@ -456,7 +456,7 @@ const cancelParticipation = () => {
             )
           }
           alertStore.showNotify({
-            title: '성공',
+            title: '알림',
             message: '챌린지 참여가 취소되었습니다.',
             type: 'success',
             position: 'top-right',
@@ -478,6 +478,27 @@ const cancelParticipation = () => {
   })
 }
 
+const participationRate = computed(() => {
+  if (!props.challengeDetail.challengeTargetCnt || props.challengeDetail.challengeTargetCnt === 0)
+    return 0
+  return (
+    (props.challengeDetail.challengeParticipantCnt / props.challengeDetail.challengeTargetCnt) *
+    100
+  ).toFixed(1)
+})
+
+// 챌린지가 종료되었는지 확인
+const isEnded = computed(() => {
+  return props.challengeDetail.challengeIsEnded === 1
+})
+
+// 참여 인원이 가득 찼는지 확인
+const isParticipationFull = computed(() => {
+  if (!props.challengeDetail) return false
+  return props.challengeDetail.challengeParticipantCnt >= props.challengeDetail.challengeTargetCnt
+})
+
+// 현재 사용자가 참여중인지 확인
 const isParticipating = computed(() => {
   return (
     props.challengeDetail.challengeParticipants?.some(
@@ -486,36 +507,47 @@ const isParticipating = computed(() => {
   )
 })
 
+// 버튼 비활성화 조건
+const isButtonDisabled = computed(() => {
+  if (isEnded.value) return true
+  if (isParticipationFull.value) return true
+  return false
+})
+
+// 버튼 클래스
+const buttonClass = computed(() => {
+  if (isEnded.value || isParticipationFull.value) {
+    return 'bg-gray-400 cursor-not-allowed'
+  }
+  if (isParticipating.value) {
+    return 'bg-gray-400 cursor-pointer'
+  }
+  return 'bg-[#ff6f3b] hover:bg-[#ff5722] cursor-pointer'
+})
+
+// 버튼 텍스트
+const buttonText = computed(() => {
+  if (isEnded.value) return '참여 종료'
+  if (isParticipationFull.value) return '참여 종료'
+  if (isParticipating.value) return '참여 취소'
+  return '챌린지 참여하기'
+})
+
+// 참여 핸들러
 const handleParticipation = () => {
+  if (isEnded.value || isParticipationFull.value) return
+
   if (isParticipating.value) {
     cancelParticipation()
   } else {
     joinChallenge()
   }
 }
-const isEnded = computed(() => {
-  return props.challengeDetail?.dday === '종료'
-})
 
-const participationRate = computed(() => {
-  if (!props.challengeDetail) return 0
-  return (
-    (props.challengeDetail.challengeParticipantCnt / props.challengeDetail.challengeTargetCnt) *
-    100
-  ).toFixed(1)
-})
-
-const buttonClass = computed(() => {
-  if (isEnded.value || isParticipating.value) {
-    return 'cursor-pointer bg-gray-400'
-  }
-  return 'cursor-pointer bg-[#ff6f3b] hover:bg-[#ff5722]'
-})
-
-const buttonText = computed(() => {
-  if (isParticipating.value) return '참여 취소'
-  if (isEnded.value) return '챌린지 종료'
-  return '챌린지 참여하기'
+// 댓글 비활성화 조건도 수정
+const isCommentDisabled = computed(() => {
+  if (isEnded.value) return true
+  return newComment.value.trim() === ''
 })
 
 const getChallengeTypeColor = (type) => {

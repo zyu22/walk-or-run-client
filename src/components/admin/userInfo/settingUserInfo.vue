@@ -1,8 +1,8 @@
 <template>
   <div class="mb-8">
     <div>
-      <h1 class="font-paperlogy text-5xl font-bold text-gray-900">사용자 관리</h1>
-      <p class="mb-8 mt-2 text-sm text-gray-600">사용자 관리</p>
+      <h1 class="font-paperlogy text-5xl font-bold text-gray-900">사용자 권한 관리</h1>
+      <p class="mb-8 mt-2 text-sm text-gray-600">사용자의 권한을 효율적으로 관리할 수 있습니다</p>
     </div>
 
     <!-- 에러 메시지 -->
@@ -49,20 +49,29 @@
       </div>
       <!-- 유저 검색 -->
       <div class="flex flex-1 gap-2">
-        <input
-          v-model="searchQuery"
-          type="text"
-          placeholder="유저 검색"
-          class="flex-1 rounded-lg border border-gray-200 px-4 py-3"
-          @keyup.enter="handleSearchButton"
-        />
+        <div class="relative flex-1">
+          <input
+            v-model="searchQuery"
+            type="text"
+            :placeholder="`${selectedSearchField.label}으로 검색`"
+            class="w-full rounded-lg border border-gray-200 px-4 py-3 pr-10"
+            @keyup.enter="handleSearchButton"
+            ref="searchInput"
+          />
+          <div v-if="isTyping" class="absolute right-3 top-1/2 -translate-y-1/2">
+            <div
+              class="h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-orange-500"
+            ></div>
+          </div>
+        </div>
         <button
           @click="handleSearchButton"
           class="rounded-lg bg-orange-500 px-6 py-3 text-white hover:bg-orange-600"
-          :disabled="isLoading"
+          :disabled="isLoading || isSearchLoading"
         >
           <span class="flex items-center gap-2">
             <svg
+              v-if="!isSearchLoading"
               xmlns="http://www.w3.org/2000/svg"
               class="h-5 w-5"
               fill="none"
@@ -76,6 +85,10 @@
                 d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
               />
             </svg>
+            <div
+              v-else
+              class="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent"
+            ></div>
             검색
           </span>
         </button>
@@ -85,15 +98,18 @@
     <!-- 결과 목록 -->
     <div class="rounded-lg bg-white shadow-sm">
       <!-- 로딩 상태 -->
-      <div v-if="isSearchLoading" class="p-2 text-center text-gray-500">
-        <div class="mx-auto h-4 w-4 animate-spin rounded-full border-b-2 border-orange-500"></div>
+      <div v-if="isSearchLoading" class="p-8 text-center text-gray-500">
+        <div
+          class="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-orange-500 border-t-transparent"
+        ></div>
+        <p class="mt-2">검색 중...</p>
       </div>
       <!-- 검색 결과가 없을 때 -->
       <div
-        v-if="!isSearchLoading && displayedUsers.length === 0"
+        v-else-if="!isSearchLoading && displayedUsers.length === 0"
         class="py-20 text-center text-gray-500"
       >
-        표시할 사용자가 없습니다.
+        검색 결과가 없습니다
       </div>
 
       <!-- 목록 -->
@@ -105,7 +121,7 @@
         >
           <div class="flex items-center space-x-4">
             <span class="font-medium">
-              {{ selectedSearchField.value === 'email' ? user.userEmail : user.userNickname }}
+              {{ selectedSearchField.label === 'email' ? user.userEmail : user.userNickname }}
             </span>
           </div>
           <div class="flex items-center gap-2">
@@ -122,7 +138,7 @@
                 'bg-[#ff6f3b]': user.userRole === 'ADMIN',
                 'bg-gray-200 hover:bg-gray-300': user.userRole !== 'ADMIN',
               }"
-              :disabled="user.userRole === 'ADMIN' || isLoading"
+              :disabled="isActionLoading || user.userRole === 'ADMIN'"
             >
               <span
                 class="inline-block h-4 w-4 transform rounded-full bg-white transition"
@@ -154,13 +170,13 @@
     </div>
   </div>
 </template>
+
 <script setup>
 import { ref, computed, watch } from 'vue'
 import { useUserStore } from '@/stores/user'
+import { useAlertStore } from '@/stores/alert'
 import api from '@/api/axios'
 import { debounce } from 'lodash'
-import { useAlertStore } from '@/stores/alert'
-import dateRangePicker from '../dashboard/dateRangePicker.vue'
 
 const alertStore = useAlertStore()
 const userStore = useUserStore()
@@ -171,8 +187,9 @@ const searchInput = ref(null)
 const error = ref('')
 const isSearchLoading = ref(false)
 const isActionLoading = ref(false)
+const isTyping = ref(false)
 
-// 페이지네이션 관련 상태 추가
+// 페이지네이션 관련 상태
 const currentPage = ref(1)
 const pageInfo = ref({
   totalPages: 0,
@@ -187,28 +204,64 @@ const searchFieldOptions = [
 
 const selectedSearchField = ref(searchFieldOptions[0])
 const showSearchFieldOptions = ref(false)
-const isSearching = ref(false)
 
 const displayedUsers = computed(() => searchResults.value)
 
 const toggleSearchFieldOptions = () => {
   showSearchFieldOptions.value = !showSearchFieldOptions.value
 }
-
-const handleSearchFieldChange = (option) => {
+const handleSearchFieldChange = async (option) => {
   selectedSearchField.value = option
   showSearchFieldOptions.value = false
-  searchInput.value?.focus()
 
   // 검색어가 있는 경우에만 즉시 검색 실행
   if (searchQuery.value.trim()) {
-    handleSearch() // 검색 필드가 변경되면 즉시 검색 실행
+    isSearchLoading.value = true
+    error.value = ''
+
+    try {
+      const response = await api.get('/search/user', {
+        params: {
+          key: option.value, // 새로 선택된 옵션의 value 사용
+          value: searchQuery.value.trim(),
+          page: currentPage.value,
+          size: pageInfo.value.size,
+        },
+      })
+
+      if (response.status === 200) {
+        searchResults.value = response.data.content
+        pageInfo.value = {
+          totalPages: response.data.pageInfo.totalPages,
+          totalElements: response.data.pageInfo.totalElements,
+          size: response.data.pageInfo.pageSize,
+        }
+      } else {
+        searchResults.value = []
+        pageInfo.value = { totalPages: 0, totalElements: 0, size: 10 }
+      }
+    } catch (err) {
+      alertStore.showNotify('오류', '검색에 실패하였습니다.', 'error')
+      searchResults.value = []
+      pageInfo.value = { totalPages: 0, totalElements: 0, size: 10 }
+      handleError(err)
+    } finally {
+      isSearchLoading.value = false
+    }
   }
+
+  searchInput.value?.focus()
 }
 
 const handleSearchButton = async () => {
-  isSearching.value = true
-  isLoading.value = true
+  if (!searchQuery.value.trim()) {
+    searchResults.value = []
+    pageInfo.value = { totalPages: 0, totalElements: 0, size: 10 }
+    return
+  }
+
+  isSearchLoading.value = true
+  error.value = ''
 
   try {
     const response = await api.get('/search/user', {
@@ -219,6 +272,7 @@ const handleSearchButton = async () => {
         size: pageInfo.value.size,
       },
     })
+
     if (response.status === 200) {
       searchResults.value = response.data.content
       pageInfo.value = {
@@ -230,16 +284,16 @@ const handleSearchButton = async () => {
       searchResults.value = []
       pageInfo.value = { totalPages: 0, totalElements: 0, size: 10 }
     }
-  } catch (error) {
+  } catch (err) {
     alertStore.showNotify('오류', '검색에 실패하였습니다.', 'error')
     searchResults.value = []
     pageInfo.value = { totalPages: 0, totalElements: 0, size: 10 }
+    handleError(err)
   } finally {
     isSearchLoading.value = false
   }
 }
 
-// 페이지 변경 핸들러 추가
 const handlePageChange = (page) => {
   currentPage.value = page
   handleSearchButton()
@@ -254,7 +308,6 @@ const checkAuthStatus = () => {
   return true
 }
 
-// 권한 변경 시에만 isActionLoading 사용
 const toggleAdminRole = async (user) => {
   if (!checkAuthStatus()) return
   if (user.userRole === 'ADMIN') {
@@ -262,15 +315,14 @@ const toggleAdminRole = async (user) => {
     return
   }
 
-  const newRole = 'ADMIN'
-  isLoading.value = true
+  isActionLoading.value = true
   error.value = ''
 
   try {
     const token = localStorage.getItem('accessToken')
     const response = await api.patch(
       `/user/${user.userId}`,
-      { role: newRole },
+      { role: 'ADMIN' },
       {
         headers: {
           Accept: '*/*',
@@ -281,7 +333,8 @@ const toggleAdminRole = async (user) => {
     )
 
     if (response.data && response.data.code === 200) {
-      user.userRole = newRole
+      user.userRole = 'ADMIN'
+      alertStore.showNotify('성공', '관리자 권한이 부여되었습니다.', 'success')
     } else {
       throw new Error('서버 응답이 올바르지 않습니다.')
     }
@@ -315,10 +368,12 @@ const handleError = (err) => {
   }
 }
 
+// 디바운스된 검색 함수 (타이핑 중 자동 검색)
 const debouncedSearch = debounce(async (query) => {
   if (!query.trim()) {
     searchResults.value = []
     pageInfo.value = { totalPages: 0, totalElements: 0, size: 10 }
+    isTyping.value = false
     return
   }
 
@@ -344,17 +399,15 @@ const debouncedSearch = debounce(async (query) => {
     alertStore.showNotify('오류', '검색에 실패하였습니다.', 'error')
     searchResults.value = []
     pageInfo.value = { totalPages: 0, totalElements: 0, size: 10 }
+  } finally {
+    isTyping.value = false
   }
 }, 300)
 
 // 검색어 변경 감시
 watch(searchQuery, (newQuery) => {
-  if (!newQuery.trim()) {
-    searchResults.value = []
-    pageInfo.value = { totalPages: 0, totalElements: 0, size: 10 }
-    return
-  }
-  currentPage.value = 1
+  isTyping.value = true
+  currentPage.value = 1 // 검색어 변경 시 첫 페이지로 리셋
   debouncedSearch(newQuery)
 })
 </script>

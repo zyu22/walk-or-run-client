@@ -54,20 +54,26 @@
         <div class="grid grid-cols-2 gap-4">
           <div class="flex flex-col space-y-1">
             <label class="block text-sm">시작일</label>
+
             <Calendar
               v-model="goalInfo.startDate"
               :end-date="goalInfo.endDate"
               :is-start-date="true"
+              :is-in-modal="true"
+              :modalOpen="isOpen"
               placeholder="시작일 선택"
             />
           </div>
 
           <div class="flex flex-col space-y-1">
             <label class="block text-sm">종료일</label>
+
             <Calendar
               v-model="goalInfo.endDate"
               :start-date="goalInfo.startDate"
               :is-end-date="true"
+              :is-in-modal="true"
+              :modalOpen="isOpen"
               placeholder="종료일 선택"
             />
           </div>
