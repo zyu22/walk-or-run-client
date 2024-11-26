@@ -11,7 +11,7 @@
     <div
       v-if="isOpen"
       class="absolute right-0 z-[9999] mt-2 w-[300px] rounded-lg border bg-white p-4 shadow-lg"
-      style="transform: translateY(-50%); margin-top: 200px"
+      :style="getCalendarStyle"
     >
       <!-- 년월 선택 -->
       <div class="mb-4 flex items-center justify-between">
@@ -50,10 +50,11 @@
   </div>
 </template>
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useAlertStore } from '@/stores/alert'
 
 const alertStore = useAlertStore()
+const isOpen = ref(false)
 const props = defineProps({
   modelValue: String,
   placeholder: {
@@ -69,20 +70,42 @@ const props = defineProps({
     default: '',
   },
   endDate: {
-    // endDate prop 추가
     type: String,
     default: '',
   },
   isStartDate: {
-    // isStartDate prop 추가
+    type: Boolean,
+    default: false,
+  },
+  // 모달 내부인지 여부를 확인하는 prop 추가
+  isInModal: {
+    type: Boolean,
+    default: false,
+  },
+  modalOpen: {
     type: Boolean,
     default: false,
   },
 })
 
+// 캘린더 위치 스타일 계산을 위한 computed 속성 추가
+const getCalendarStyle = computed(() => {
+  if (props.isInModal) {
+    return {
+      position: 'fixed',
+      transform: 'none',
+      top: 'auto',
+      right: 'auto',
+      zIndex: 9999,
+    }
+  }
+  return {
+    transform: 'translateY(0)',
+    marginTop: '2px',
+  }
+})
 const emit = defineEmits(['update:modelValue'])
 
-const isOpen = ref(false)
 const currentDate = ref(new Date())
 
 // 현재 보고 있는 년월
@@ -183,17 +206,33 @@ const formatDate = (dateString) => {
   return `${year}-${month}-${day}`
 }
 
+// 클릭 이벤트 핸들러 수정
 const handleClickOutside = (event) => {
-  if (!event.target.closest('.relative')) {
+  const target = event.target
+  const isCalendarClick = target.closest('.relative')
+  if (!isCalendarClick) {
     isOpen.value = false
   }
 }
 
+// 컴포넌트가 마운트될 때 isOpen을 확실히 false로 설정
 onMounted(() => {
   document.addEventListener('click', handleClickOutside)
+  isOpen.value = false // 명시적으로 false 설정
 })
 
+// 컴포넌트가 언마운트될 때도 isOpen을 리셋
 onUnmounted(() => {
   document.removeEventListener('click', handleClickOutside)
 })
+
+// modalOpen prop이 변경될 때 캘린더를 닫음
+watch(
+  () => props.modalOpen,
+  (newVal) => {
+    if (newVal === false) {
+      isOpen.value = false
+    }
+  },
+)
 </script>

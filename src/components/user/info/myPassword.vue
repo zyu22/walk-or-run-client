@@ -169,14 +169,17 @@ const updatePassword = async () => {
     const accessToken = localStorage.getItem('accessToken')
     const userId = userStore.userId
 
+    console.log('new: ', passwordInfo.newPassword)
+    console.log('old: ', passwordInfo.currentPassword)
+
     const response = await api.post(
       `user/${userId}/password/change`,
       {
         userId: userId,
         userPassword: passwordInfo.currentPassword,
         newPassword: passwordInfo.newPassword,
-        userPasswordAnswer: passwordInfo.securityAnswer,
-        userPasswordQuestionId: passwordInfo.passwordQuetion,
+        userPasswordAnswer: passwordInfo.passwordQuestionAnswer,
+        userPasswordQuestionId: passwordInfo.passwordQuestionId,
       },
       {
         headers: {
@@ -184,6 +187,8 @@ const updatePassword = async () => {
         },
       },
     )
+
+    console.log(response)
 
     if (response.status === 200) {
       alertStore.showNotify({
@@ -200,7 +205,7 @@ const updatePassword = async () => {
         type: 'error',
         position: 'top-right',
       })
-      throw new Error('비밀번호 변경 실패')
+      return
     }
   } catch (error) {
     console.error('비밀번호 업데이트 실패:', error)
