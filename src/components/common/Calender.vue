@@ -1,4 +1,3 @@
-<!-- components/common/DatePicker.vue -->
 <template>
   <div class="relative">
     <div

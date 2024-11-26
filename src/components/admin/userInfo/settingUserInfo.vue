@@ -1,7 +1,9 @@
 <template>
   <div class="mb-8">
-    <h1 class="font-paperlogy text-5xl font-bold text-gray-900">사용자 관리</h1>
-    <p class="mb-8 mt-2 text-sm text-gray-600">사용자 관리</p>
+    <div>
+      <h1 class="font-paperlogy text-5xl font-bold text-gray-900">사용자 관리</h1>
+      <p class="mb-8 mt-2 text-sm text-gray-600">사용자 관리</p>
+    </div>
 
     <!-- 에러 메시지 -->
     <div v-if="error" class="mb-4 rounded-lg bg-red-50 p-4 text-red-600">
@@ -45,18 +47,18 @@
           </button>
         </div>
       </div>
+      <!-- 유저 검색 -->
       <div class="flex flex-1 gap-2">
         <input
           v-model="searchQuery"
           type="text"
           placeholder="유저 검색"
           class="flex-1 rounded-lg border border-gray-200 px-4 py-3"
-          :disabled="isLoading"
           @keyup.enter="handleSearchButton"
         />
         <button
           @click="handleSearchButton"
-          class="rounded-lg bg-orange-500 px-6 py-3 text-white hover:bg-orange-600 disabled:opacity-50"
+          class="rounded-lg bg-orange-500 px-6 py-3 text-white hover:bg-orange-600"
           :disabled="isLoading"
         >
           <span class="flex items-center gap-2">
@@ -83,15 +85,14 @@
     <!-- 결과 목록 -->
     <div class="rounded-lg bg-white shadow-sm">
       <!-- 로딩 상태 -->
-      <div v-if="isLoading" class="py-20 text-center text-gray-500">
-        <div
-          class="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-b-2 border-orange-500"
-        ></div>
-        로딩 중...
+      <div v-if="isSearchLoading" class="p-2 text-center text-gray-500">
+        <div class="mx-auto h-4 w-4 animate-spin rounded-full border-b-2 border-orange-500"></div>
       </div>
-
       <!-- 검색 결과가 없을 때 -->
-      <div v-else-if="displayedUsers.length === 0" class="py-20 text-center text-gray-500">
+      <div
+        v-if="!isSearchLoading && displayedUsers.length === 0"
+        class="py-20 text-center text-gray-500"
+      >
         표시할 사용자가 없습니다.
       </div>
 
@@ -159,6 +160,7 @@ import { useUserStore } from '@/stores/user'
 import api from '@/api/axios'
 import { debounce } from 'lodash'
 import { useAlertStore } from '@/stores/alert'
+import dateRangePicker from '../dashboard/dateRangePicker.vue'
 
 const alertStore = useAlertStore()
 const userStore = useUserStore()
@@ -167,6 +169,8 @@ const searchQuery = ref('')
 const searchResults = ref([])
 const searchInput = ref(null)
 const error = ref('')
+const isSearchLoading = ref(false)
+const isActionLoading = ref(false)
 
 // 페이지네이션 관련 상태 추가
 const currentPage = ref(1)
@@ -195,6 +199,11 @@ const handleSearchFieldChange = (option) => {
   selectedSearchField.value = option
   showSearchFieldOptions.value = false
   searchInput.value?.focus()
+
+  // 검색어가 있는 경우에만 즉시 검색 실행
+  if (searchQuery.value.trim()) {
+    handleSearch() // 검색 필드가 변경되면 즉시 검색 실행
+  }
 }
 
 const handleSearchButton = async () => {
@@ -210,7 +219,6 @@ const handleSearchButton = async () => {
         size: pageInfo.value.size,
       },
     })
-
     if (response.status === 200) {
       searchResults.value = response.data.content
       pageInfo.value = {
@@ -227,7 +235,7 @@ const handleSearchButton = async () => {
     searchResults.value = []
     pageInfo.value = { totalPages: 0, totalElements: 0, size: 10 }
   } finally {
-    isLoading.value = false
+    isSearchLoading.value = false
   }
 }
 
@@ -246,9 +254,9 @@ const checkAuthStatus = () => {
   return true
 }
 
+// 권한 변경 시에만 isActionLoading 사용
 const toggleAdminRole = async (user) => {
   if (!checkAuthStatus()) return
-
   if (user.userRole === 'ADMIN') {
     error.value = '관리자 권한은 해제할 수 없습니다.'
     return
@@ -281,7 +289,7 @@ const toggleAdminRole = async (user) => {
     console.error('권한 변경 실패:', err)
     handleError(err)
   } finally {
-    isLoading.value = false
+    isActionLoading.value = false
   }
 }
 

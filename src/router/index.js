@@ -19,13 +19,14 @@ import userDetailChallenge from '@/components/user/challenge/challengeDetailModa
 import myGoal from '@/components/user/mygoal/myGoal.vue'
 
 import settingChallenge from '@/components/admin/challenge/settingChallenge.vue'
-import settingScheduleChallenge from '@/components/admin/challenge/settingChallenge.vue'
+import settingScheduleChallenge from '@/components/admin/challenge/settingScheduleChallenge.vue'
 import settingUserInfo from '@/components/admin/userInfo/settingUserInfo.vue'
 import adminDashboard from '@/components/admin/dashboard/adminDashboard.vue'
 
 import upload from '@/components/user/upload/upload.vue'
 import AuthenticationView from '@/views/AuthenticationView.vue'
 import userDashboard from '@/components/user/dashboard/userDashboard.vue'
+import authenticationView from '@/components/authentication/Authentication.vue'
 
 const routes = [
   {
@@ -33,6 +34,11 @@ const routes = [
     name: 'auth',
     component: AuthenticationView,
     children: [
+      {
+        path: '',
+        name: 'landing',
+        component: authenticationView,
+      },
       {
         path: 'login',
         name: 'login',

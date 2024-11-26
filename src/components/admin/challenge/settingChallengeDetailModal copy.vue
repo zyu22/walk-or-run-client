@@ -95,18 +95,25 @@
               </div>
 
               <!-- 챌린지 기간 -->
-              <div v-if="challengeDetail">
-                <div class="rounded-lg bg-gray-50 p-4">
-                  <div class="space-y-2">
-                    <p>
-                      <span class="font-medium">시작일:</span>
-                      {{ challengeDetail.challengeCreateDate }}
-                    </p>
-                    <p>
-                      <span class="font-medium">종료일:</span>
-                      {{ challengeDetail.challengeDeleteDate }}
-                    </p>
-                  </div>
+              <div class="grid grid-cols-2 gap-4">
+                <div class="flex flex-col space-y-1">
+                  <label class="block text-sm">시작일</label>
+                  <Calendar
+                    v-model="challengeDetail.challengeCreateDate"
+                    :end-date="challengeDetail.challengeDeleteDate"
+                    :is-start-date="true"
+                    placeholder="시작일 선택"
+                  />
+                </div>
+
+                <div class="flex flex-col space-y-1">
+                  <label class="block text-sm">종료일</label>
+                  <Calendar
+                    v-model="challengeDetail.challengeDeleteDate"
+                    :start-date="challengeDetail.challengeCreateDate"
+                    :is-end-date="true"
+                    placeholder="종료일 선택"
+                  />
                 </div>
               </div>
             </div>
@@ -242,6 +249,10 @@
 import { ref } from 'vue'
 import { useUserStore } from '@/stores/user'
 import api from '@/api/axios'
+import Calendar from '@/components/common/Calender.vue'
+import { useAlertStore } from '@/stores/alert'
+
+const alertStore = useAlertStore()
 
 // 1. 먼저 props 정의
 const props = defineProps({
@@ -293,7 +304,6 @@ const isCommentsLoading = ref(false)
 
 // 상태 변수
 const isLoading = ref(false) // 로딩 상태 추적
-const isJoined = ref(false) // 참여 여부 추적
 
 // 수정 관련 상태 추가
 const editingCommentId = ref(null)
@@ -334,6 +344,71 @@ const loadComments = async (page) => {
   } finally {
     isCommentsLoading.value = false
   }
+}
+
+// 챌린지 수정
+const updateChallenge = async () => {
+  try {
+    const response = await api.put(`/challenge/${props.challengeId}`, {
+      challengeCategoryName: props.challengeDetail.challengeCategoryName,
+      challengeTitle: props.challengeDetail.challengeTitle,
+      challengeDescription: props.challengeDetail.challengeDescription,
+      challengeCreateDate: props.challengeDetail.challengeCreateDate,
+      challengeDeleteDate: props.challengeDetail.challengeDeleteDate,
+    })
+
+    if (response.status === 200) {
+      alertStore.showNotify({
+        title: '성공',
+        message: '챌린지가 수정되었습니다.',
+        type: 'success',
+        position: 'top-right',
+      })
+      emit('close')
+    }
+  } catch (error) {
+    console.error('챌린지 수정 실패:', error)
+    alertStore.showNotify({
+      title: '오류',
+      message: '챌린지 수정에 실패했습니다.',
+      type: 'error',
+      position: 'center',
+    })
+  }
+}
+
+// 챌린지 삭제
+const deleteChallenge = () => {
+  alertStore.showConfirm({
+    title: '확인',
+    message: '챌린지를 삭제하시겠습니까?',
+    onConfirm: async () => {
+      try {
+        const response = await api.delete(`/challenge/${props.challengeId}`)
+
+        if (response.status === 200) {
+          alertStore.showNotify({
+            title: '성공',
+            message: '챌린지가 삭제되었습니다.',
+            type: 'success',
+            position: 'top-right',
+          })
+          emit('close')
+        }
+      } catch (error) {
+        console.error('챌린지 삭제 실패:', error)
+        alertStore.showNotify({
+          title: '오류',
+          message: '챌린지 삭제에 실패했습니다.',
+          type: 'error',
+          position: 'center',
+        })
+      }
+    },
+    onCancel: () => {
+      return
+    },
+  })
 }
 
 // 댓글 삭제 (기존 함수 수정)
@@ -392,64 +467,6 @@ const addComment = async () => {
   } catch (error) {
     console.error('댓글 작성 실패:', error)
   }
-}
-
-const joinChallenge = async () => {
-  if (!userStore.userId || !props.challengeDetail?.challengeId) return
-
-  isLoading.value = true
-  try {
-    const response = await api.post(`challenge/${props.challengeDetail.challengeId}`, {
-      userId: userStore.userId,
-    })
-
-    if (response.status === 200) {
-      isJoined.value = true
-      if (props.challengeDetail) {
-        props.challengeDetail.challengeIsParticipant = 1
-      }
-    }
-  } catch (error) {
-    console.error('챌린지 참여 실패:', error)
-  } finally {
-    isLoading.value = false
-  }
-}
-
-// 챌린지 참여 취소
-const cancelParticipation = async () => {
-  if (!userStore.userId || !props.challengeDetail?.challengeId) return
-
-  if (!confirm('챌린지 참여를 취소하시겠습니까?')) return
-
-  console.log(props.challengeDetail.challengeId)
-  console.log(userStore.userId)
-  try {
-    const response = await api.delete(`challenge/${props.challengeDetail.challengeId}`, {
-      data: {
-        userId: userStore.userId,
-      },
-    })
-    if (response.status === 200) {
-      if (props.challengeDetail) {
-        props.challengeDetail.challengeIsParticipant = 0
-      }
-      alert('챌린지 참여가 취소되었습니다.')
-    }
-  } catch (error) {
-    console.error('참여 취소 실패:', error)
-    alert('참여 취소에 실패했습니다.')
-  }
-}
-
-const getChallengeTypeColor = (type) => {
-  const colors = {
-    일일: 'bg-orange-100 text-orange-600',
-    주간: 'bg-green-100 text-green-600',
-    월간: 'bg-blue-100 text-blue-600',
-    이벤트: 'bg-purple-100 text-purple-600',
-  }
-  return colors[type] || 'bg-gray-100 text-gray-600'
 }
 </script>
 
