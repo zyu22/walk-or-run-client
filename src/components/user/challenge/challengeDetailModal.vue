@@ -2,6 +2,7 @@
   <div
     class="fixed inset-0 z-50 flex items-center justify-center overflow-hidden bg-black bg-opacity-50"
     v-if="challengeDetail"
+    @click.self="$emit('close')"
   >
     <div class="modal-container w-full max-w-2xl overflow-y-auto rounded-lg bg-white p-8">
       <!-- 로딩 상태 -->
@@ -213,11 +214,15 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useUserStore } from '@/stores/user'
 import api from '@/api/axios'
+import { useAlertStore } from '@/stores/alert'
 
-// 1. 먼저 props 정의
+const alertStore = useAlertStore()
+const emit = defineEmits(['close'])
+const userStore = useUserStore()
+
 const props = defineProps({
   challenge: Object,
   challengeDetail: Object,
@@ -245,13 +250,6 @@ const props = defineProps({
   },
 })
 
-// 2. emit 정의
-const emit = defineEmits(['close'])
-
-// 3. store 초기화
-const userStore = useUserStore()
-
-// 4. ref들 정의
 const newComment = ref('')
 const comments = ref(props.initialComments || [])
 const commentPageInfo = ref(
@@ -304,24 +302,48 @@ const loadComments = async (page) => {
       comments.value = ''
     }
   } catch (error) {
+    alertStore.showNotify({
+      title: '알림',
+      message: '댓글 조회에 실패하였습니다.\n 다시 시도해주세요.',
+      type: 'error',
+      position: 'top-right',
+    })
     console.error('댓글 로딩 실패:', error)
   } finally {
     isCommentsLoading.value = false
   }
 }
-
-// 댓글 삭제 (기존 함수 수정)
-const deleteComment = async (commentId) => {
-  if (!confirm('댓글을 삭제하시겠습니까?')) return
-
-  try {
-    await api.delete(`/challenge/${props.challengeId}/comment/${commentId}`)
-    // 댓글 목록 새로고침
-    await loadComments(currentPage.value)
-  } catch (error) {
-    console.error('댓글 삭제 실패:', error)
-    alert('댓글 삭제에 실패했습니다.')
-  }
+const deleteComment = (commentId) => {
+  alertStore.showConfirm({
+    title: '확인',
+    message: '댓글을 삭제하시겠습니까?',
+    onConfirm: async () => {
+      // async 추가
+      try {
+        await api.delete(`/challenge/${props.challengeId}/comment/${commentId}`)
+        // 댓글 목록 새로고침
+        await loadComments(currentPage.value)
+        // 성공 알림
+        alertStore.showNotify({
+          title: '성공',
+          message: '댓글이 삭제되었습니다.',
+          type: 'success',
+          position: 'top-right',
+        })
+      } catch (error) {
+        console.error('댓글 삭제 실패:', error)
+        alertStore.showNotify({
+          title: '오류',
+          message: '댓글 삭제에 실패했습니다.',
+          type: 'error',
+          position: 'center',
+        })
+      }
+    },
+    onCancel: () => {
+      return
+    },
+  })
 }
 
 // 댓글 수정
@@ -345,7 +367,12 @@ const updateComment = async (commentId) => {
     cancelEdit()
   } catch (error) {
     console.error('댓글 수정 실패:', error)
-    alert('댓글 수정에 실패했습니다.')
+    alertStore.showNotify({
+      title: '오류',
+      message: '댓글 수정에 실패했습니다.',
+      type: 'error',
+      position: 'center',
+    })
   }
 }
 
@@ -354,7 +381,6 @@ const addComment = async () => {
   if (newComment.value.trim() === '') return
 
   try {
-    // API 호출 추가 (실제 엔드포인트에 맞게 수정 필요)
     await api.post(`/challenge/${props.challengeId}/comment`, {
       commentContent: newComment.value,
       commentAuthorId: userStore.userId,
@@ -365,9 +391,16 @@ const addComment = async () => {
     newComment.value = ''
   } catch (error) {
     console.error('댓글 작성 실패:', error)
+    alertStore.showNotify({
+      title: '오류',
+      message: '댓글 작성에 실패했습니다.',
+      type: 'error',
+      position: 'center',
+    })
   }
 }
 
+// 챌린지 참여
 const joinChallenge = async () => {
   if (!userStore.userId || !props.challengeDetail?.challengeId) return
 
@@ -391,29 +424,45 @@ const joinChallenge = async () => {
 }
 
 // 챌린지 참여 취소
-const cancelParticipation = async () => {
+const cancelParticipation = () => {
   if (!userStore.userId || !props.challengeDetail?.challengeId) return
 
-  if (!confirm('챌린지 참여를 취소하시겠습니까?')) return
+  alertStore.showConfirm({
+    title: '확인',
+    message: '챌린지 참여를 취소하시겠습니까?',
+    onConfirm: async () => {
+      try {
+        const response = await api.delete(`challenge/${props.challengeDetail.challengeId}`, {
+          data: {
+            userId: userStore.userId,
+          },
+        })
 
-  console.log(props.challengeDetail.challengeId)
-  console.log(userStore.userId)
-  try {
-    const response = await api.delete(`challenge/${props.challengeDetail.challengeId}`, {
-      data: {
-        userId: userStore.userId,
-      },
-    })
-    if (response.status === 200) {
-      if (props.challengeDetail) {
-        props.challengeDetail.challengeIsParticipant = 0
+        if (response.status === 200) {
+          if (props.challengeDetail) {
+            props.challengeDetail.challengeIsParticipant = 0
+          }
+          alertStore.showNotify({
+            title: '성공',
+            message: '챌린지 참여가 취소되었습니다.',
+            type: 'success',
+            position: 'top-right',
+          })
+        }
+      } catch (error) {
+        console.error('참여 취소 실패:', error)
+        alertStore.showNotify({
+          title: '오류',
+          message: '참여 취소에 실패했습니다.',
+          type: 'error',
+          position: 'center',
+        })
       }
-      alert('챌린지 참여가 취소되었습니다.')
-    }
-  } catch (error) {
-    console.error('참여 취소 실패:', error)
-    alert('참여 취소에 실패했습니다.')
-  }
+    },
+    onCancel: () => {
+      return
+    },
+  })
 }
 
 const getChallengeTypeColor = (type) => {
@@ -425,6 +474,21 @@ const getChallengeTypeColor = (type) => {
   }
   return colors[type] || 'bg-gray-100 text-gray-600'
 }
+
+// ESC 키로 모달 닫기 (script 맨 아래에 추가)
+const handleEscape = (e) => {
+  if (e.key === 'Escape' && props.challengeDetail) {
+    emit('close')
+  }
+}
+
+onMounted(() => {
+  window.addEventListener('keydown', handleEscape)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleEscape)
+})
 </script>
 
 <style scoped>
