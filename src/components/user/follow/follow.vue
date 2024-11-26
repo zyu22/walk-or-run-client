@@ -280,7 +280,6 @@ const handleSearchResponse = (response) => {
 
 // 검색 에러 처리 함수
 const handleSearchError = () => {
-  alertStore.showNotify('오류', '검색에 실패하였습니다.', 'error')
   resetSearchResults()
 }
 
@@ -361,7 +360,12 @@ const handleFollowToggle = async (userId) => {
     // 팔로우 상태 업데이트
     await checkFollowingStatus(userId)
   } catch (error) {
-    alertStore.showNotify('오류', '팔로우/언팔로우 실패하였습니다.', 'error')
+    alertStore.showNotify({
+      title: '알림',
+      message: '팔로우/언팔로우 실패하였습니다.',
+      type: 'error',
+      position: 'center',
+    })
   }
 }
 
@@ -393,7 +397,12 @@ const handleSearchButton = async () => {
       pageInfo.value = { totalPages: 0, totalElements: 0, size: 10 }
     }
   } catch (error) {
-    alertStore.showNotify('오류', '검색에 실패하였습니다.', 'error')
+    alertStore.showNotify({
+      title: '알림',
+      message: '검색에 실패하였습니다. \n 다시 시도해주세요.',
+      type: 'error',
+      position: 'top-right',
+    })
     searchResults.value = []
     pageInfo.value = { totalPages: 0, totalElements: 0, size: 10 }
   } finally {
@@ -429,8 +438,6 @@ const debouncedSearch = debounce(async (query) => {
 
 // 탭 변경 시 검색 모드 해제
 const handleTabChange = (tab) => {
-  alertStore.showNotify('오류', '검색에 실패하였습니다.', 'error')
-  alertStore.showNotify('진짜', '이거지롱', 'success')
   activeTab.value = tab
   searchQuery.value = ''
   isSearching.value = false // 검색 모드 해제

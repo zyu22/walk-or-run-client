@@ -180,7 +180,6 @@ const commentPageInfo = ref({
 
 // 필터 상태 변경 처리 함수
 const handleStatusChange = (status) => {
-  console.log('status: ', status)
   filterStatus.value = status
 
   let apiEndpoint = '/challenge'
@@ -238,9 +237,7 @@ const getChallege = async (page = 1) => {
         size: 16,
       },
     })
-    // 응답 데이터 구조 확인
 
-    console.log('API Response:', response.data)
     challenges.value = response.data.content
     pageInfo.value = response.data.pageInfo
     currentPage.value = page
@@ -259,7 +256,6 @@ const getChallengeDetail = async (challengeId) => {
 
     challengeDetail.value = response.data || {}
 
-    console.log(response)
     return response.data
   } catch (err) {
     console.error('챌린지 상세 정보 에러:', err)
@@ -328,6 +324,12 @@ const getChallengeTypeColor = (type) => {
 
 const openChallengeModal = async (challenge) => {
   if (!challenge?.challengeId) {
+    alertStore.showNotify({
+      title: '알림',
+      message: '유효하지 않은 챌린지입니다.',
+      type: 'error',
+      position: 'center',
+    })
     console.error('유효하지 않은 챌린지:', challenge)
     return
   }
