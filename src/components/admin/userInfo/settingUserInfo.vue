@@ -1,8 +1,15 @@
 <template>
+  <header class="mb-8 flex items-center justify-between">
+      <div>
+        <h1 class="font-paperlogy text-5xl font-bold text-gray-900">사용자 관리</h1>
+        <p class="mt-2 text-sm text-gray-600">사용자에게 관리자 권한을 줄 수 있어요!</p>
+      </div>
+      <div class="flex items-center gap-4">
+        <DateRangePicker @update-date-range="handleDateRangeUpdate" />
+      </div>
+    </header>
   <div class="flex w-full items-center justify-center">
     <div class="mx-auto w-3/5 pt-1">
-      <h1 class="font-paperlogy text-5xl font-bold text-gray-900">Follow</h1>
-      <p class="mb-8 mt-2 text-sm text-gray-600">사용자 관리</p>
       <div class="mb-8">
         <!-- 에러 메시지 표시 -->
         <div v-if="error" class="mb-4 rounded-lg bg-red-50 p-4 text-red-600">
@@ -49,24 +56,20 @@
             v-model="searchQuery"
             type="text"
             placeholder="유저 검색"
-            class="flex-1 rounded-lg border border-gray-200 px-4 py-3 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
-            :disabled="isLoading"
+            class="flex-1 rounded-lg border border-gray-200 px-4 py-3 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-200"
             ref="searchInput"
           />
         </div>
 
         <div class="rounded-lg bg-white shadow-sm">  
           <!-- 로딩 상태 -->
-          <div v-if="isLoading" class="py-20 text-center text-gray-500">
-            <div
-              class="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-b-2 border-orange-500"
-            ></div>
-            로딩 중...
+          <div v-if="isSearchLoading" class="p-2 text-center text-gray-500">
+            <div class="mx-auto h-4 w-4 animate-spin rounded-full border-b-2 border-orange-500"></div>
           </div>
 
           <!-- 검색 결과가 없을 때 -->
           <div
-            v-else-if="displayedUsers.length === 0"
+            v-if="!isSearchLoading && displayedUsers.length === 0"
             class="py-20 text-center text-gray-500"
           >
             표시할 사용자가 없습니다.
@@ -81,22 +84,22 @@
   >
     <div class="flex items-center space-x-4">
       <span class="font-medium">
-        {{ selectedSearchField.value === 'email' ? user.userEmail : user.userNickname }}
+        {{ user.userNickname }}
       </span>
     </div>
     <div class="flex items-center gap-2">
-      <span class="text-sm" :class="user.userRole === 'ADMIN' ? 'text-purple-600 font-medium' : 'text-gray-600'">
+      <span class="text-sm" :class="user.userRole === 'ADMIN' ? 'text-orange-600 font-medium' : 'text-gray-600'">
         {{ user.userRole === 'ADMIN' ? '관리자' : '일반 사용자' }}
       </span>
       <button
-        @click="toggleAdminRole(user)"
-        class="relative inline-flex h-6 w-11 items-center rounded-full"
-        :class="{ 
-          'bg-purple-600': user.userRole === 'ADMIN',
-          'bg-gray-200 hover:bg-gray-300': user.userRole !== 'ADMIN'
-        }"
-        :disabled="user.userRole === 'ADMIN' || isLoading"
-      >
+      @click="toggleAdminRole(user)"
+      :disabled="user.userRole === 'ADMIN' || isActionLoading"
+      class="relative inline-flex h-6 w-11 items-center rounded-full"
+      :class="{ 
+        'bg-orange-600': user.userRole === 'ADMIN',
+        'bg-gray-200 hover:bg-gray-300': user.userRole !== 'ADMIN'
+      }"
+    >
         <span
           class="inline-block h-4 w-4 transform rounded-full bg-white transition"
           :class="user.userRole === 'ADMIN' ? 'translate-x-6' : 'translate-x-1'"
@@ -146,7 +149,18 @@ const handleSearchFieldChange = (option) => {
   selectedSearchField.value = option
   showSearchFieldOptions.value = false
   searchInput.value?.focus()
+  
+  // 검색어가 있는 경우에만 즉시 검색 실행
+  if (searchQuery.value.trim()) {
+    handleSearch()  // 검색 필드가 변경되면 즉시 검색 실행
+  }
 }
+
+// 검색 상태 관리를 위한 ref 추가
+const isTyping = ref(false)
+// 검색 UI 상태를 위한 별도의 로딩 상태
+const isSearchLoading = ref(false)
+const isActionLoading = ref(false)
 
 const handleSearch = async () => {
   if (!searchQuery.value.trim()) {
@@ -154,7 +168,8 @@ const handleSearch = async () => {
     return
   }
 
-  isLoading.value = true
+  // 검색 중임을 표시하되, 입력은 계속 가능하도록 함
+  isSearchLoading.value = true
   error.value = ''
   
   try {
@@ -166,8 +181,6 @@ const handleSearch = async () => {
     })
 
     if (Array.isArray(response.data.content)) {
-      // API 응답 확인
-      console.log('Search Response:', response.data.content)
       searchResults.value = response.data.content
     } else {
       searchResults.value = []
@@ -177,7 +190,7 @@ const handleSearch = async () => {
     searchResults.value = []
     error.value = '검색 중 오류가 발생했습니다.'
   } finally {
-    isLoading.value = false
+    isSearchLoading.value = false
   }
 }
 
@@ -190,17 +203,17 @@ const checkAuthStatus = () => {
   return true
 }
 
+// 권한 변경 시에만 isActionLoading 사용
 const toggleAdminRole = async (user) => {
   if (!checkAuthStatus()) return
   
-  // ADMIN -> USER 전환은 허용하지 않음
   if (user.userRole === 'ADMIN') {
     error.value = '관리자 권한은 해제할 수 없습니다.'
     return
   }
   
-  const newRole = 'ADMIN' // USER -> ADMIN만 가능
-  isLoading.value = true
+  const newRole = 'ADMIN'
+  isActionLoading.value = true // 권한 변경 시에만 사용
   error.value = ''
 
   try {
@@ -225,7 +238,7 @@ const toggleAdminRole = async (user) => {
     console.error('권한 변경 실패:', err)
     handleError(err)
   } finally {
-    isLoading.value = false
+    isActionLoading.value = false
   }
 }
 
@@ -252,8 +265,15 @@ const handleError = (err) => {
 }
 
 // 검색어 변경 시 디바운스 처리된 검색 실행
-const debouncedSearch = debounce(handleSearch, 300)
+// 디바운스 시간을 더 길게 설정하고, 타이핑 상태 관리 추가
+const debouncedSearch = debounce(() => {
+  isTyping.value = false
+  handleSearch()
+}, 500) // 디바운스 시간을 500ms로 증가
+
+// 검색어 변경 감시
 watch(searchQuery, () => {
+  isTyping.value = true
   debouncedSearch()
 })
 </script>
