@@ -19,14 +19,14 @@ import userDetailChallenge from '@/components/user/challenge/challengeDetailModa
 import myGoal from '@/components/user/mygoal/myGoal.vue'
 
 import settingChallenge from '@/components/admin/challenge/settingChallenge.vue'
-import settingScheduleChallenge from '@/components/admin/challenge/settingChallenge.vue'
+import settingScheduleChallenge from '@/components/admin/challenge/settingScheduleChallenge.vue'
 import settingUserInfo from '@/components/admin/userInfo/settingUserInfo.vue'
 import adminDashboard from '@/components/admin/dashboard/adminDashboard.vue'
 
 import upload from '@/components/user/upload/upload.vue'
 import AuthenticationView from '@/views/AuthenticationView.vue'
 import userDashboard from '@/components/user/dashboard/userDashboard.vue'
-import authenticationView from '@/components/authentication/AuthenticationView.vue'
+import authenticationView from '@/components/authentication/Authentication.vue'
 
 const routes = [
   {
@@ -163,8 +163,6 @@ router.beforeEach((to, from, next) => {
   const accessToken = localStorage.getItem('accessToken')
   const userStore = useUserStore()
 
-  
-
   // 이미 로그인 한 사용자가 auth 페이지 접근 시도할 경우
   if (accessToken && to.matched.some((record) => record.name === 'auth')) {
     if (userStore.userRole === 'USER') {
@@ -177,14 +175,12 @@ router.beforeEach((to, from, next) => {
   // 로그인이 필요한 페이지 접근 제어
   if (!accessToken && to.path.startsWith('/user')) {
     return next({ name: 'login' })
-
   }
 
   // admin 경로 접근 제어
   if (to.path.startsWith('/admin')) {
     if (userStore.userRole !== 'ADMIN') {
-      return next({ name: 'userDashboard'})
-      
+      return next({ name: 'userDashboard' })
     }
   }
 

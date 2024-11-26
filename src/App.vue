@@ -64,24 +64,6 @@ const handleLogout = async () => {
   }
 }
 
-// 브라우저 종료 시 처리할 함수
-const handleBeforeUnload = (event) => {
-  if (isLoggedIn.value) {
-    // localStorage 클리어
-    localStorage.removeItem('accessToken')
-    // store 초기화
-    userStore.clearUserInfo()
-
-    // 서버에 로그아웃 요청 보내기 (선택사항)
-    try {
-      // 동기적으로 요청을 보내기 위해 sendBeacon 사용
-      navigator.sendBeacon('/api/user/logout')
-    } catch (error) {
-      console.error('Logout on unload failed:', error)
-    }
-  }
-}
-
 const checkLoginStatus = async () => {
   try {
     const accessToken = localStorage.getItem('accessToken')
@@ -99,8 +81,10 @@ const checkLoginStatus = async () => {
           router.push({ name: 'userDashboard' })
         }
       }
-    } else if (router.currentRoute.value.path.startsWith('/user') || 
-               router.currentRoute.value.path.startsWith('/admin')) {
+    } else if (
+      router.currentRoute.value.path.startsWith('/user') ||
+      router.currentRoute.value.path.startsWith('/admin')
+    ) {
       // 인증이 필요한 페이지에 접근할 때만 리다이렉트
       router.push({ name: 'login' })
     }

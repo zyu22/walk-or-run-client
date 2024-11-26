@@ -1,7 +1,7 @@
 <template>
   <div
     class="fixed inset-0 z-50 flex items-center justify-center overflow-hidden bg-black bg-opacity-50"
-    v-if="challengeDetail"
+    v-if="props.challengeDetail"
     @click.self="$emit('close')"
   >
     <div class="modal-container w-full max-w-2xl overflow-y-auto rounded-lg bg-white p-8">
@@ -21,7 +21,7 @@
             >
               {{ challengeType }}
             </span>
-            <h2 class="text-2xl font-bold">{{ challengeDetail.challengeTitle }}</h2>
+            <h2 class="text-2xl font-bold">{{ props.challengeDetail.challengeTitle }}</h2>
           </div>
           <button @click="$emit('close')" class="text-gray-500 hover:text-gray-700">
             <span class="sr-only">Close</span>
@@ -39,38 +39,35 @@
         <!-- 상세 내용 -->
         <div class="space-y-6">
           <div>
-            <p class="text-gray-600">{{ challengeDetail.challengeDescription }}</p>
+            <p class="text-gray-600">{{ props.challengeDetail.challengeDescription }}</p>
           </div>
 
           <div class="grid grid-cols-2 gap-4">
             <div class="rounded-lg bg-gray-50 p-4">
               <p class="text-sm text-gray-500">참여자 수</p>
               <p class="text-lg font-semibold">
-                {{ challengeDetail.challengeParticipantCnt || 0 }}명
+                {{ props.challengeDetail.challengeParticipantCnt || 0 }}명
               </p>
             </div>
             <div class="rounded-lg bg-gray-50 p-4">
               <p class="text-sm text-gray-500">참여율</p>
-              <p class="text-lg font-semibold">
-                {{
-                  (
-                    (challengeDetail.challengeParticipantCnt / challengeDetail.challengeTargetCnt) *
-                    100
-                  ).toFixed(1)
-                }}%
-              </p>
+              <p class="text-lg font-semibold">{{ participationRate }}%</p>
             </div>
           </div>
 
-          <div v-if="challengeDetail">
+          <div v-if="props.challengeDetail">
             <div class="rounded-lg bg-gray-50 p-4">
               <div class="space-y-2">
-                <p class="font-paperlogy text-xl">{{ challengeDetail.challengeCategoryName }}</p>
-                <p>
-                  <span class="font-medium">시작일:</span> {{ challengeDetail.challengeCreateDate }}
+                <p class="font-paperlogy text-xl">
+                  {{ props.challengeDetail.challengeCategoryName }}
                 </p>
                 <p>
-                  <span class="font-medium">종료일:</span> {{ challengeDetail.challengeDeleteDate }}
+                  <span class="font-medium">시작일:</span>
+                  {{ props.challengeDetail.challengeCreateDate }}
+                </p>
+                <p>
+                  <span class="font-medium">종료일:</span>
+                  {{ props.challengeDetail.challengeDeleteDate }}
                 </p>
               </div>
             </div>
@@ -78,27 +75,12 @@
 
           <div class="mt-6">
             <button
-              @click="
-                challengeDetail.challengeIsParticipant === 1
-                  ? cancelParticipation() // showCancelModal = true 대신 cancelParticipation 함수 직접 호출
-                  : joinChallenge()
-              "
+              @click="handleParticipation"
               class="w-full rounded-lg px-4 py-2 text-white transition-colors"
-              :class="{
-                'cursor-pointer bg-[#ff6f3b] hover:bg-[#ff5722]':
-                  challengeDetail.dday !== '종료' && challengeDetail.challengeIsParticipant === 0,
-                'cursor-pointer bg-gray-400':
-                  challengeDetail.dday === '종료' || challengeDetail.challengeIsParticipant === 1,
-              }"
-              :disabled="challengeDetail.dday === '종료'"
+              :class="buttonClass"
+              :disabled="isEnded"
             >
-              {{
-                challengeDetail.challengeIsParticipant === 1
-                  ? '참여 취소'
-                  : challengeDetail.dday === '종료'
-                    ? '챌린지 종료'
-                    : '챌린지 참여하기'
-              }}
+              {{ buttonText }}
             </button>
           </div>
 
@@ -214,7 +196,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { useUserStore } from '@/stores/user'
 import api from '@/api/axios'
 import { useAlertStore } from '@/stores/alert'
@@ -225,7 +207,10 @@ const userStore = useUserStore()
 
 const props = defineProps({
   challenge: Object,
-  challengeDetail: Object,
+  challengeDetail: {
+    type: Object,
+    required: true,
+  },
   isLoading: Boolean,
   challengeId: {
     type: [String, Number],
@@ -249,7 +234,6 @@ const props = defineProps({
     }),
   },
 })
-
 const newComment = ref('')
 const comments = ref(props.initialComments || [])
 const commentPageInfo = ref(
@@ -283,7 +267,6 @@ const cancelEdit = () => {
   editingCommentContent.value = ''
 }
 
-// 5. 함수들 정의
 const loadComments = async (page) => {
   isCommentsLoading.value = true
   try {
@@ -313,6 +296,8 @@ const loadComments = async (page) => {
     isCommentsLoading.value = false
   }
 }
+
+// 댓글 삭제
 const deleteComment = (commentId) => {
   alertStore.showConfirm({
     title: '확인',
@@ -413,11 +398,30 @@ const joinChallenge = async () => {
     if (response.status === 200) {
       isJoined.value = true
       if (props.challengeDetail) {
-        props.challengeDetail.challengeIsParticipant = 1
+        // challengeParticipants 배열에 현재 사용자 추가
+        props.challengeDetail.challengeParticipants = [
+          ...(props.challengeDetail.challengeParticipants || []),
+          { userId: userStore.userId },
+        ]
+        // 참여자 수 증가
+        props.challengeDetail.challengeParticipantCnt =
+          (props.challengeDetail.challengeParticipantCnt || 0) + 1
       }
+      alertStore.showNotify({
+        title: '성공',
+        message: '챌린지 참여가 완료되었습니다.',
+        type: 'success',
+        position: 'top-right',
+      })
     }
   } catch (error) {
     console.error('챌린지 참여 실패:', error)
+    alertStore.showNotify({
+      title: '오류',
+      message: '챌린지 참여에 실패했습니다.',
+      type: 'error',
+      position: 'center',
+    })
   } finally {
     isLoading.value = false
   }
@@ -440,7 +444,16 @@ const cancelParticipation = () => {
 
         if (response.status === 200) {
           if (props.challengeDetail) {
-            props.challengeDetail.challengeIsParticipant = 0
+            // challengeParticipants 배열에서 현재 사용자 제거
+            props.challengeDetail.challengeParticipants =
+              props.challengeDetail.challengeParticipants.filter(
+                (participant) => participant.userId !== userStore.userId,
+              )
+            // 참여자 수 감소
+            props.challengeDetail.challengeParticipantCnt = Math.max(
+              (props.challengeDetail.challengeParticipantCnt || 1) - 1,
+              0,
+            )
           }
           alertStore.showNotify({
             title: '성공',
@@ -465,6 +478,46 @@ const cancelParticipation = () => {
   })
 }
 
+const isParticipating = computed(() => {
+  return (
+    props.challengeDetail.challengeParticipants?.some(
+      (participant) => participant.userId === userStore.userId,
+    ) ?? false
+  )
+})
+
+const handleParticipation = () => {
+  if (isParticipating.value) {
+    cancelParticipation()
+  } else {
+    joinChallenge()
+  }
+}
+const isEnded = computed(() => {
+  return props.challengeDetail?.dday === '종료'
+})
+
+const participationRate = computed(() => {
+  if (!props.challengeDetail) return 0
+  return (
+    (props.challengeDetail.challengeParticipantCnt / props.challengeDetail.challengeTargetCnt) *
+    100
+  ).toFixed(1)
+})
+
+const buttonClass = computed(() => {
+  if (isEnded.value || isParticipating.value) {
+    return 'cursor-pointer bg-gray-400'
+  }
+  return 'cursor-pointer bg-[#ff6f3b] hover:bg-[#ff5722]'
+})
+
+const buttonText = computed(() => {
+  if (isParticipating.value) return '참여 취소'
+  if (isEnded.value) return '챌린지 종료'
+  return '챌린지 참여하기'
+})
+
 const getChallengeTypeColor = (type) => {
   const colors = {
     일일: 'bg-orange-100 text-orange-600',
@@ -475,7 +528,6 @@ const getChallengeTypeColor = (type) => {
   return colors[type] || 'bg-gray-100 text-gray-600'
 }
 
-// ESC 키로 모달 닫기 (script 맨 아래에 추가)
 const handleEscape = (e) => {
   if (e.key === 'Escape' && props.challengeDetail) {
     emit('close')

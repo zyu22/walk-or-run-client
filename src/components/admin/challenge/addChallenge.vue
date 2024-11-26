@@ -80,7 +80,7 @@
               :end-date="challengeForm.challengeDeleteDate"
               :is-start-date="true"
               placeholder="시작일 선택"
-              class="w-full rounded-lg border border-gray-300 p-3 focus:border-[#ff6f3b] focus:outline-none focus:ring-1"
+              :is-in-modal="true"
             />
             <!-- <input
               type="date"

@@ -206,7 +206,6 @@ const showSearchFieldOptions = ref(false)
 // 검색 버튼을 클릭했거나 검색어가 있을 때 true
 const isSearching = ref(false)
 
-// onMounted를 스크립트의 최상위 레벨로 이동
 onMounted(() => {
   fetchFollowData()
 })
