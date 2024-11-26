@@ -50,8 +50,8 @@
         @click="openChallengeModal(challenge)"
         class="group cursor-pointer rounded-lg bg-white p-6 shadow-sm transition-all hover:shadow-md"
         :class="{
-          'opacity-75': challenge.dday === '종료',
-          'border border-gray-200': challenge.dday === '종료',
+          'opacity-75': challenge.challengeIsEnded === 1,
+          'border border-gray-200': challenge.challengeIsEnded === 1,
         }"
       >
         <div class="mb-4 flex items-start justify-between">
@@ -67,8 +67,8 @@
         <h3
           class="mb-2 text-lg font-semibold"
           :class="{
-            'text-gray-900 group-hover:text-[#ff6f3b]': challenge.dday !== '종료',
-            'text-gray-400': challenge.dday === '종료',
+            'text-gray-900 group-hover:text-[#ff6f3b]': challenge.challengeIsEnded !== 1,
+            'text-gray-400': challenge.challengeIsEnded === 1,
           }"
         >
           {{ challenge.challengeTitle }}
@@ -76,8 +76,8 @@
         <p
           class="mb-4 text-sm"
           :class="{
-            'text-gray-600': challenge.dday !== '종료',
-            'text-gray-400': challenge.dday === '종료',
+            'text-gray-600': challenge.challengeIsEnded !== 1,
+            'text-gray-400': challenge.challengeIsEnded === 1,
           }"
         >
           {{ challenge.challengeDescription }}
@@ -131,19 +131,12 @@
 
   <!-- challenge.vue -->
   <ChallengeDetailModal
-    v-if="selectedChallenge && !isModalLoading"
+    v-if="selectedChallenge && challengeDetail && !isModalLoading"
     :challenge="selectedChallenge"
-    :challengeDetail="challengeDetail || {}"
+    :challengeDetail="challengeDetail"
     :challengeType="getChallengeType(selectedChallenge)"
-    :initialComments="comments || []"
-    :initialCommentPageInfo="
-      commentPageInfo || {
-        currentPage: 1,
-        pageSize: 10,
-        totalElements: 0,
-        totalPages: 0,
-      }
-    "
+    :initialComments="comments"
+    :initialCommentPageInfo="commentPageInfo"
     :isLoading="isModalLoading"
     :challengeId="selectedChallenge.challengeId"
     @close="closeModal"
@@ -189,6 +182,13 @@ const commentPageInfo = ref({
 const handleStatusChange = (status) => {
   console.log('status: ', status)
   filterStatus.value = status
+
+  let apiEndpoint = '/challenge'
+  if (status === '진행중인 챌린지') {
+    apiEndpoint = '/challenge/active' // challengeIsEnded === 0
+  } else if (status === '종료된 챌린지') {
+    apiEndpoint = '/challenge/end' // challengeIsEnded === 1
+  }
 
   getChallege() // 필터 상태 변경 시 API 호출
 }
@@ -239,6 +239,7 @@ const getChallege = async (page = 1) => {
       },
     })
     // 응답 데이터 구조 확인
+
     console.log('API Response:', response.data)
     challenges.value = response.data.content
     pageInfo.value = response.data.pageInfo
@@ -254,12 +255,11 @@ const getChallege = async (page = 1) => {
 // 챌린지 상세보기
 const getChallengeDetail = async (challengeId) => {
   try {
-    const response = await api.get(`/challenge/${challengeId}`, {
-      params: {
-        userId: userStore.userId,
-      },
-    })
+    const response = await api.get(`/challenge/${challengeId}`)
+
     challengeDetail.value = response.data || {}
+
+    console.log(response)
     return response.data
   } catch (err) {
     console.error('챌린지 상세 정보 에러:', err)
@@ -332,15 +332,25 @@ const openChallengeModal = async (challenge) => {
     return
   }
 
-  selectedChallenge.value = challenge
-
   try {
     isModalLoading.value = true
+    selectedChallenge.value = challenge
 
-    const detailPromise = getChallengeDetail(challenge.challengeId)
-    const commentsPromise = getComments(challenge.challengeId)
-
-    const [detailResponse, commentsResponse] = await Promise.all([detailPromise, commentsPromise])
+    // 상세 정보와 댓글을 순차적으로 가져옵니다
+    const detailData = await getChallengeDetail(challenge.challengeId)
+    if (detailData) {
+      challengeDetail.value = detailData
+      const commentsData = await getComments(challenge.challengeId)
+      if (commentsData) {
+        comments.value = commentsData.content || []
+        commentPageInfo.value = commentsData.pageInfo || {
+          currentPage: 1,
+          pageSize: 5,
+          totalElements: 0,
+          totalPages: 0,
+        }
+      }
+    }
   } catch (error) {
     console.error('모달 데이터 로딩 중 오류:', error)
     alertStore.showNotify({
@@ -353,7 +363,6 @@ const openChallengeModal = async (challenge) => {
     isModalLoading.value = false
   }
 }
-
 const closeModal = () => {
   selectedChallenge.value = null
   comments.value = null

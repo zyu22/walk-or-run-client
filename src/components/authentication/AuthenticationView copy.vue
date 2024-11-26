@@ -8,9 +8,7 @@
         key="intro"
         class="mb-8 w-full max-w-4xl rounded-lg bg-white p-8 text-center shadow-lg"
       >
-        <h1 class="mb-4 animate-pulse text-4xl font-bold text-blue-600">
-          운동 대시보드에 오신 걸 환영합니다!
-        </h1>
+        <h1 class="mb-4 animate-pulse text-4xl font-bold">운동 대시보드에 오신 걸 환영합니다!</h1>
         <p class="mb-8 text-lg text-gray-700">
           운동을 기록하고, 챌린지에 참여하며, 운동 목표를 달성하세요. 모두 한 곳에서 가능합니다.
         </p>

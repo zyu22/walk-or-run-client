@@ -13,7 +13,7 @@
             챌린지 추가
         </button>
       </div>
-  
+
       <!-- 필터 섹션 -->
       <div class="mb-6 flex items-center justify-between">
       <div class="flex gap-2">
@@ -28,7 +28,7 @@
           {{ status }}
         </button>
       </div>
-  
+
       <div class="flex gap-2">
         <button
           v-for="type in challengeTypes"
@@ -45,7 +45,7 @@
         </button>
       </div>
     </div>
-  
+
       <!-- 로딩 상태 -->
         <div v-if="isLoading" class="flex items-center justify-center py-20">
         <div class="h-12 w-12 animate-spin rounded-full border-b-2 border-[#ff6f3b]"></div>
@@ -56,7 +56,7 @@
         <div v-else-if="error" class="py-20 text-center text-red-500">
         {{ error }}
         </div>
-  
+
       <!-- 테이블 -->
       <div v-else class="overflow-x-auto">
         <table class="min-w-full">
@@ -123,7 +123,7 @@
                   {{ getChallengeType(challenge) }}
                 </span>
               </td>
-  
+
               <!-- 카테고리 -->
               <td class="whitespace-nowrap px-6 py-4">
                 <span
@@ -133,18 +133,18 @@
                   {{ getCategoryName(challenge.challengeCategoryCode) }}
                 </span>
               </td>
-  
+
               <!-- 제목 -->
               <td class="px-6 py-4 text-gray-900 group-[.is-ended]:text-gray-500">
                 {{ challenge.challengeTitle }}
               </td>
-  
+
               <!-- 기간 -->
               <td class="whitespace-nowrap px-6 py-4 text-gray-900 group-[.is-ended]:text-gray-500">
                 {{ formatDate(challenge.challengeCreateDate) }} ~
                 {{ formatDate(challenge.challengeDeleteDate) }}
               </td>
-  
+
               <!-- 참여율 -->
               <td class="px-6 py-4">
                 <div class="flex items-center">
@@ -209,14 +209,14 @@
         </table>
       </div>
     </div>
-  
+
     <!-- 챌린지 추가 모달 -->
     <scheduleChallengeAddModal
         :is-open="isAddModalOpen"
         @close="closeAddModal"
         @refresh="refreshChallenges"
     />
-  
+
     <!-- 챌린지 상세 모달 -->
     <settingScheduleChallengeDetailModal
       v-if="selectedChallenge && !isModalLoading"
@@ -230,7 +230,7 @@
       @close="closeDetailModal"
     />
   </template>
-  
+
   <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { useUserStore } from '@/stores/user'
@@ -367,7 +367,7 @@ const openDetailModal = async (challenge) => {
       challengeDeleteDate: challenge.challengeDeleteDate?.split(' ')[0],
       challengeCategoryName: getCategoryName(challenge.challengeCategoryCode)
     }
-    
+
     selectedChallenge.value = challenge
     isDetailModalOpen.value = true
 
@@ -503,44 +503,45 @@ onMounted(() => {
   getChallenge()
 })
 </script>
-  
+
   <style scoped>
   .modal-container {
     max-height: 90vh;
     scrollbar-width: thin;
     scrollbar-color: #cbd5e1 transparent;
   }
-  
+
   .modal-container::-webkit-scrollbar {
     width: 6px;
   }
-  
+
   .modal-container::-webkit-scrollbar-track {
     background: transparent;
     margin: 4px;
   }
-  
+
   .modal-container::-webkit-scrollbar-thumb {
     background: rgba(203, 213, 225, 0.5);
     border-radius: 100px;
     transition: all 0.2s ease-in-out;
   }
-  
+
   .modal-container::-webkit-scrollbar-thumb:hover {
     background: rgba(148, 163, 184, 0.8);
   }
-  
+
   .modal-container::-webkit-scrollbar-thumb:active {
     background: rgba(255, 111, 59, 1);
   }
-  
+
   .modal-container::-webkit-scrollbar-corner {
     background: transparent;
   }
-  
+
   .modal-container {
     scrollbar-gutter: stable;
     scroll-behavior: smooth;
   }
   </style>
-  
+
+

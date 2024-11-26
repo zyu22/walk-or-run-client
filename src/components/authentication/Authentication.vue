@@ -78,14 +78,14 @@ export default {
     const activeSection = ref(0)
 
     const navigateToLogin = () => {
-      activeSection.value = 2  // 섹션 변경
+      activeSection.value = 2 // 섹션 변경
       setTimeout(() => {
         router.push('/login')
       }, 500)
     }
 
     const navigateToRegister = () => {
-      activeSection.value = 2  // 섹션 변경
+      activeSection.value = 2 // 섹션 변경
       setTimeout(() => {
         router.push('/register')
       }, 500)
@@ -94,9 +94,9 @@ export default {
     return {
       activeSection,
       navigateToLogin,
-      navigateToRegister
+      navigateToRegister,
     }
-  }
+  },
 }
 </script>
 

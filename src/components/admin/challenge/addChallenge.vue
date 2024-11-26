@@ -80,7 +80,7 @@
               :end-date="challengeForm.challengeDeleteDate"
               :is-start-date="true"
               placeholder="시작일 선택"
-              class="w-full rounded-lg border border-gray-300 p-3 focus:border-[#ff6f3b] focus:outline-none focus:ring-1"
+              :is-in-modal="true"
             />
             <!-- <input
               type="date"
@@ -97,11 +97,12 @@
               v-model="selectedDeleteDate"
               class="w-full rounded-lg border border-gray-300 p-3 focus:border-[#ff6f3b] focus:outline-none focus:ring-1"
             /> -->
-            <Calendar
+            <Calender
               v-model="challengeForm.challengeDeleteDate"
               :start-date="challengeForm.challengeCreateDate"
               :is-end-date="true"
               placeholder="종료일 선택"
+              :is-in-modal="true"
             />
           </div>
         </div>
@@ -128,6 +129,7 @@ import api from '@/api/axios'
 import Calendar from '@/components/common/Calender.vue'
 import { useValidation } from '@/components/common/Validation.js'
 import { useAlertStore } from '@/stores/alert'
+import Calender from '@/components/common/Calender.vue'
 
 const { validateDates } = useValidation()
 const alertStore = useAlertStore()
