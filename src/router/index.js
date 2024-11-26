@@ -19,7 +19,7 @@ import userDetailChallenge from '@/components/user/challenge/challengeDetailModa
 import myGoal from '@/components/user/mygoal/myGoal.vue'
 
 import settingChallenge from '@/components/admin/challenge/settingChallenge.vue'
-import settingScheduleChallenge from '@/components/admin/challenge/settingChallenge.vue'
+import settingScheduleChallenge from '@/components/admin/challenge/settingScheduleChallenge.vue'
 import settingUserInfo from '@/components/admin/userInfo/settingUserInfo.vue'
 import adminDashboard from '@/components/admin/dashboard/adminDashboard.vue'
 
