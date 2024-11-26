@@ -334,7 +334,12 @@ const toggleAdminRole = async (user) => {
 
     if (response.data && response.data.code === 200) {
       user.userRole = 'ADMIN'
-      alertStore.showNotify('성공', '관리자 권한이 부여되었습니다.', 'success')
+      alertStore.showNotify({
+        title: '알림',
+        message: '관리자 권한이 부여되었습니다.',
+        type: 'success',
+        position: 'top-right',
+      })
     } else {
       throw new Error('서버 응답이 올바르지 않습니다.')
     }

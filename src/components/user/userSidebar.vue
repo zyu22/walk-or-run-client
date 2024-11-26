@@ -119,7 +119,9 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import { useAlertStore } from '@/stores/alert'
 
+const alertStore = useAlertStore()
 const router = useRouter()
 const route = useRoute()
 const isMyPageOpen = ref(false)
@@ -136,6 +138,15 @@ const toggleMyPage = () => {
 }
 
 const handleLogout = () => {
-  emit('logout')
+  alertStore.showConfirm({
+    title: '확인',
+    message: '로그아웃 하시겠습니까?',
+    onConfirm: async () => {
+      emit('logout')
+    },
+    onCancel: () => {
+      return
+    },
+  })
 }
 </script>

@@ -30,7 +30,7 @@
             <h3 class="font-medium text-gray-800">
               {{ goal.challengeCategoryName }}
             </h3>
-            
+
           </div>
           <div class="mt-2 space-y-2">
             <div class="flex justify-between text-sm">
@@ -81,7 +81,7 @@ import myGoalDetail from '@/components/user/mygoal/myGoalDetail.vue'
 const userStore = useUserStore()
 const goals = ref([])
 const isModalOpen = ref(false)
-const selectedGoal = ref(null) 
+const selectedGoal = ref(null)
 
 const fetchGoals = async () => {
   try {
@@ -131,7 +131,6 @@ const calculateTimeProgress = (startDate, endDate) => {
 
 // 출력 형식 계산
 const printType = (challengeCategoryUnitName) => {
-  console.log(challengeCategoryUnitName.split('(')[1])
   return challengeCategoryUnitName.split('(')[1].split(')')[0]
 }
 

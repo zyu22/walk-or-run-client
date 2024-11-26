@@ -10,11 +10,7 @@
         <div>
           <h2 class="font-paperlogy text-4xl font-bold text-gray-900">반복 챌린지 추가</h2>
         </div>
-        <button 
-          @click="handleClose"
-          type="button" 
-          class="text-gray-500 hover:text-gray-700"
-        >
+        <button @click="handleClose" type="button" class="text-gray-500 hover:text-gray-700">
           <span class="sr-only">Close</span>
           <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path
@@ -85,8 +81,8 @@
           >
             <option value="">반복 주기 선택</option>
             <option value="1">일일</option>
-            <option value="2">일주일</option>
-            <option value="3">한달</option>
+            <option value="2">주간</option>
+            <option value="3">월간</option>
           </select>
         </div>
 
@@ -94,22 +90,26 @@
         <div class="grid grid-cols-2 gap-4">
           <div>
             <label class="mb-2 block text-sm font-medium text-gray-700">시작일</label>
-            <Calendar
+            <Calender
               v-model="challengeForm.challengeCreateDate"
               :end-date="challengeForm.challengeDeleteDate"
               :is-start-date="true"
+              :is-end-date="false"
               placeholder="시작일 선택"
-              class="w-full rounded-lg border border-gray-300 p-3 focus:border-[#ff6f3b] focus:outline-none focus:ring-1"
+              :is-in-modal="true"
+              :modalOpen="isOpen"
             />
           </div>
           <div>
             <label class="mb-2 block text-sm font-medium text-gray-700">종료일</label>
-            <Calendar
+            <Calender
               v-model="challengeForm.challengeDeleteDate"
               :start-date="challengeForm.challengeCreateDate"
+              :is-start-date="false"
               :is-end-date="true"
               placeholder="종료일 선택"
-              class="w-full rounded-lg border border-gray-300 p-3 focus:border-[#ff6f3b] focus:outline-none focus:ring-1"
+              :is-in-modal="true"
+              :modalOpen="isOpen"
             />
           </div>
         </div>
@@ -117,7 +117,7 @@
         <!-- 버튼 -->
         <div class="flex justify-end space-x-3 pt-4">
           <button
-            @click="createChallenge"
+            @click="createScheduleChallenge"
             type="button"
             class="rounded-lg bg-[#ff6f3b] px-4 py-2 text-white hover:bg-[#ff5722]"
             :disabled="isSubmitting"
@@ -133,9 +133,8 @@
 <script setup>
 import { ref, defineProps, defineEmits } from 'vue'
 import { useUserStore } from '@/stores/user'
+import Calender from '@/components/common/Calender.vue'
 import api from '@/api/axios'
-import Calendar from '@/components/common/Calender.vue'
-import { useValidation } from '@/components/common/Validation.js'
 import { useAlertStore } from '@/stores/alert'
 
 // Props 정의
@@ -148,8 +147,6 @@ const props = defineProps({
 
 // Emits 정의
 const emit = defineEmits(['close', 'refresh'])
-
-const { validateDates } = useValidation()
 const alertStore = useAlertStore()
 const userStore = useUserStore()
 const isSubmitting = ref(false)
@@ -175,30 +172,14 @@ const handleClose = () => {
 }
 
 // 챌린지 생성
-const createChallenge = async () => {
-  // 유효성 검사
-  const { isValid, message } = validateDates(
-    challengeForm.value.challengeCreateDate,
-    challengeForm.value.challengeDeleteDate,
-  )
-
-  if (!isValid) {
-    alertStore.showNotify({
-      title: '알림',
-      message,
-      type: 'error',
-      position: 'center',
-    })
-    return
-  }
-
+const createScheduleChallenge = async () => {
   // 필수 필드 검증
   const validations = [
     { field: 'challengeCategoryCode', message: '카테고리를 선택해주세요.' },
     { field: 'challengeTitle', message: '챌린지 제목을 입력해주세요.' },
     { field: 'challengeDescription', message: '챌린지 내용을 입력해주세요.' },
     { field: 'challengeTargetCnt', message: '목표 인원을 입력해주세요.' },
-    { field: 'challengeSchedulerCycle', message: '반복 주기를 선택해주세요.' }, // 추가된 검증
+    { field: 'challengeSchedulerCycle', message: '반복 주기를 선택해주세요.' },
   ]
 
   for (const validation of validations) {
@@ -215,12 +196,12 @@ const createChallenge = async () => {
 
   try {
     isSubmitting.value = true
-    
+
     // 날짜 포맷팅
     const requestData = {
       ...challengeForm.value,
-      challengeCreateDate: challengeForm.value.challengeCreateDate 
-        ? `${challengeForm.value.challengeCreateDate} 00:00:00` 
+      challengeCreateDate: challengeForm.value.challengeCreateDate
+        ? `${challengeForm.value.challengeCreateDate} 00:00:00`
         : undefined,
       challengeDeleteDate: challengeForm.value.challengeDeleteDate
         ? `${challengeForm.value.challengeDeleteDate} 23:59:59`
@@ -228,10 +209,11 @@ const createChallenge = async () => {
     }
 
     const response = await api.post('/admin/challenge/schedule', requestData)
-    
-    if (response.status === 200) {
+
+    console.log(response)
+    if (response.status === 201) {
       alertStore.showNotify({
-        title: '성공',
+        title: '알림',
         message: '반복 챌린지가 성공적으로 등록되었습니다.',
         type: 'success',
         position: 'center',
@@ -242,7 +224,7 @@ const createChallenge = async () => {
   } catch (error) {
     console.error('챌린지 등록 실패:', error)
     alertStore.showNotify({
-      title: '오류',
+      title: '알림',
       message: '챌린지 등록에 실패했습니다. 다시 시도해주세요.',
       type: 'error',
       position: 'center',
