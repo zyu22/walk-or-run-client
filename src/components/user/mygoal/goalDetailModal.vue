@@ -11,7 +11,7 @@
         </button>
       </div>
 
-      <form @submit.prevent="createMygoal" class="space-y-6">
+      <form @submit.prevent="handleSubmit" class="space-y-6">
         <!-- 챌린지 카테고리 선택 -->
         <div class="flex flex-col space-y-1">
           <label for="challengeCategory" class="block text-sm">챌린지 카테고리</label>
@@ -105,7 +105,7 @@ import { useAlertStore } from '@/stores/alert'
 import Calendar from '@/components/common/Calender.vue'
 import { useValidation } from '@/components/common/Validation.js'
 
-const { isStartDateValid, isEndDateValid, validateDates } = useValidation()
+const { validateDates } = useValidation()
 const alertStore = useAlertStore()
 const props = defineProps({
   isOpen: {
@@ -127,7 +127,7 @@ const goalInfo = reactive({
   targetAmount: '',
 })
 
-const createMygoal = async () => {
+const handleSubmit = async () => {
   const { isValid, message } = validateDates(goalInfo.startDate, goalInfo.endDate)
   // 필수 필드 검증
   if (!isValid) {
@@ -166,6 +166,9 @@ const createMygoal = async () => {
     })
     return
   }
+
+  console.log(goalInfo.startDate)
+  console.log(goalInfo.endDate)
 
   try {
     const token = localStorage.getItem('accessToken')

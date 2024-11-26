@@ -155,6 +155,9 @@ import { ref, computed, onMounted } from 'vue'
 import ChallengeDetailModal from '@/components/user/challenge/challengeDetailModal.vue'
 import { useUserStore } from '@/stores/user'
 import api from '@/api/axios'
+import { useAlertStore } from '@/stores/alert'
+
+const alertStore = useAlertStore()
 
 const userStore = useUserStore()
 const challengeTypes = ['전체', '일일', '주간', '월간', '이벤트']
@@ -340,8 +343,12 @@ const openChallengeModal = async (challenge) => {
     const [detailResponse, commentsResponse] = await Promise.all([detailPromise, commentsPromise])
   } catch (error) {
     console.error('모달 데이터 로딩 중 오류:', error)
-    // 에러 발생 시에도 사용자에게 알림
-    alert('데이터를 불러오는데 실패했습니다.')
+    alertStore.showNotify({
+      title: '알림',
+      message: '데이터를 불러오는데 실패했습니다.',
+      type: 'error',
+      position: 'top-right',
+    })
   } finally {
     isModalLoading.value = false
   }
