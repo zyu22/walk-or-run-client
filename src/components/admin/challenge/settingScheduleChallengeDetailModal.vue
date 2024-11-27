@@ -135,17 +135,19 @@
             수정
           </button>
           <button
+            v-if="props.challengeDetail.challengeIsEnded !== 1"
             @click="deleteChallenge"
             type="submit"
-            :disabled="props.challengeDetail.challengeIsEnded === 1"
-            class="rounded-lg px-6 py-2 text-white"
-            :class="
-              props.challengeDetail.challengeIsEnded === 1
-                ? 'bg-gray-300'
-                : 'bg-black transition-colors hover:bg-gray-300'
-            "
+            class="rounded-lg bg-black px-6 py-2 text-white transition-colors hover:bg-gray-600"
           >
-            {{ props.challengeDetail.challengeIsEnded === 1 ? '종료된 챌린지' : '종료' }}
+            종료
+          </button>
+          <button
+            v-else
+            disabled
+            class="cursor-not-allowed rounded-lg bg-gray-400 px-6 py-2 text-white"
+          >
+            종료된 챌린지
           </button>
         </div>
 
@@ -210,7 +212,7 @@
         </div>
 
         <!-- 댓글 입력창 -->
-        <div class="mt-6">
+        <div class="mt-6" v-if="props.challengeDetail.challengeIsEnded !== 1">
           <textarea
             v-model="newComment"
             placeholder="응원의 한마디 부탁드려요!"
@@ -224,6 +226,10 @@
           >
             댓글 작성
           </button>
+        </div>
+        <!-- 종료된 챌린지일 경우 메시지 표시 -->
+        <div v-else class="mt-6 text-center text-gray-500">
+          종료된 챌린지에는 댓글을 작성할 수 없습니다.
         </div>
       </div>
     </div>
