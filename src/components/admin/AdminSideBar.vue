@@ -110,7 +110,9 @@
 import { ref, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAlertStore } from '@/stores/alert'
+import { useUserStore } from '@/stores/user'
 
+const userStore = useUserStore()
 const emit = defineEmits(['logout'])
 const alertStore = useAlertStore()
 const router = useRouter()
@@ -124,17 +126,14 @@ const isChallengeMenuActive = computed(() => {
 const toggleChallenge = () => {
   isChallengeOpen.value = !isChallengeOpen.value
 }
-
-const handleLogout = () => {
-  alertStore.showConfirm({
-    title: '확인',
-    message: '로그아웃 하시겠습니까?',
-    onConfirm: async () => {
-      emit('logout')
-    },
-    onCancel: () => {
-      return
-    },
-  })
+const handleLogout = async () => {
+  try {
+    userStore.clearUserInfo()
+    await router.push({ name: 'login' })
+  } catch (error) {
+    console.error('로그아웃 실패:', error)
+    userStore.clearUserInfo()
+    await router.push({ name: 'login' })
+  }
 }
 </script>

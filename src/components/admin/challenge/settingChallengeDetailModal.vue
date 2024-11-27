@@ -87,24 +87,14 @@
             <label class="mb-2 block text-sm font-medium text-gray-700">시작일</label>
             <Calender
               v-model="challengeDetail.challengeCreateDate"
-              :end-date="challengeDetail.challengeDeleteDate"
-              :is-start-date="true"
-              :is-end-date="false"
-              placeholder="시작일 선택"
-              :is-in-modal="true"
-              :modal-open="!!challengeDetail"
+              class="w-full rounded-lg border border-gray-300 p-3 focus:border-[#ff6f3b] focus:outline-none focus:ring-1"
             />
           </div>
           <div>
             <label class="mb-2 block text-sm font-medium text-gray-700">종료일</label>
             <Calender
               v-model="challengeDetail.challengeDeleteDate"
-              :start-date="challengeDetail.challengeCreateDate"
-              :is-start-date="false"
-              :is-end-date="true"
-              placeholder="종료일 선택"
-              :is-in-modal="true"
-              :modal-open="!!challengeDetail"
+              class="w-full rounded-lg border border-gray-300 p-3 focus:border-[#ff6f3b] focus:outline-none focus:ring-1"
             />
           </div>
         </div>
@@ -118,14 +108,8 @@
             수정
           </button>
           <button
-            @click="deleteChallenge"
-            :disabled="props.challengeDetail.challengeIsEnded === 1"
-            class="rounded-lg px-6 py-2 text-white"
-            :class="
-              props.challengeDetail.challengeIsEnded === 1
-                ? 'bg-gray-300'
-                : 'bg-black transition-colors hover:bg-gray-600'
-            "
+            type="submit"
+            class="rounded-lg bg-black px-6 py-2 text-white transition-colors hover:bg-gray-600"
           >
             {{ props.challengeDetail.challengeIsEnded === 1 ? '종료된 챌린지' : '종료' }}
           </button>
@@ -212,14 +196,12 @@
   </div>
 </template>
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
-import Calender from '@/components/common/Calender.vue'
+import { ref } from 'vue'
 import { useUserStore } from '@/stores/user'
-import { useAlertStore } from '@/stores/alert'
 import api from '@/api/axios'
 
 const alertStore = useAlertStore()
-
+const { validateDates } = useValidation()
 // 1. 먼저 props 정의
 const props = defineProps({
   challenge: Object,
@@ -300,105 +282,57 @@ const loadComments = async (page) => {
 // 챌린지 수정
 const updateChallenge = async () => {
   // 필수 필드 검증
-  if (!props.challengeDetail.challengeCategoryCode) {
-    alertStore.showNotify({
-      title: '알림',
-      message: '카테고리를 선택해주세요.',
-      type: 'error',
-      position: 'center',
-    })
+  if (!challengeDetail.challengeCategoryCode) {
+    alert('카테고리를 선택해주세요.')
     return
   }
-  if (!props.challengeDetail.challengeTitle) {
-    alertStore.showNotify({
-      title: '알림',
-      message: '챌린지 제목을 입력해주세요.',
-      type: 'error',
-      position: 'center',
-    })
+  if (!challengeDetail.challengeTitle) {
+    alert('챌린지 제목을 입력해주세요.')
     return
   }
-  if (!props.challengeDetail.challengeDescription) {
-    alertStore.showNotify({
-      title: '알림',
-      message: '챌린지 내용을 입력해주세요.',
-      type: 'error',
-      position: 'center',
-    })
+  if (!challengeDetail.challengeDescription) {
+    alert('챌린지 내용을 입력해주세요.')
     return
   }
-  if (!props.challengeDetail.challengeTargetCnt) {
-    alertStore.showNotify({
-      title: '알림',
-      message: '목표 인원을 입력해주세요.',
-      type: 'error',
-      position: 'center',
-    })
+  if (!challengeDetail.challengeTargetCnt) {
+    alert('목표 인원을 입력해주세요.')
+    return
+  }
+  if (!challengeDetail.challengeDeleteDate) {
+    alert('종료일을 입력해주세요.')
     return
   }
 
   try {
-    const response = await api.put(`/admin/challenge/${props.challengeDetail.challengeId}`, {
-      challengeCategoryCode: props.challengeDetail.challengeCategoryCode,
-      challengeTitle: props.challengeDetail.challengeTitle,
-      challengeDescription: props.challengeDetail.challengeDescription,
-      challengeTargetCnt: props.challengeDetail.challengeTargetCnt,
-      challengeCreateDate: `${props.challengeDetail.challengeCreateDate} 00:00:00`,
-      challengeDeleteDate: `${props.challengeDetail.challengeDeleteDate} 23:59:59`,
+    await api.put(`/admin/challenge/${props.challengeId}`, {
+      commentContent: editingCommentContent.value,
     })
 
-    if (response.status === 200) {
-      alertStore.showNotify({
-        title: '알림',
-        message: '챌린지 수정에 성공하였습니다.',
-        type: 'success',
-        position: 'top-right',
-      })
-    }
+    console.log(currentPage.value)
+
+    // 댓글 목록 새로고침
+    await loadComments(currentPage.value)
+
+    // 수정 모드 종료
+    cancelEdit()
   } catch (error) {
-    console.error('챌린지 수정 실패:', error)
-    alertStore.showNotify({
-      title: '알림',
-      message: '챌린지 수정에 실패하였습니다.\n 다시 시도해주세요.',
-      type: 'error',
-      position: 'center',
-    })
+    console.error('댓글 수정 실패:', error)
+    alert('댓글 수정에 실패했습니다.')
   }
 }
 
 // 챌린지 삭제
-const deleteChallenge = async () => {
-  alertStore.showConfirm({
-    title: '확인',
-    message: '챌린지를 종료 하시겠습니까?',
-    onConfirm: async () => {
-      try {
-        await api.delete(`/admin/challenge/${props.challengeDetail.challengeId}`)
+const deleteChallenge = async (commentId) => {
+  if (!confirm('댓글을 삭제하시겠습니까?')) return
 
-        // 성공 알림
-        alertStore.showNotify({
-          title: '알림',
-          message: '챌린지가 종료되었습니다.',
-          type: 'success',
-          position: 'top-right',
-        })
-
-        emit('close')
-        emit('refresh')
-      } catch (error) {
-        console.error('챌린지 종료 실패:', error)
-        alertStore.showNotify({
-          title: '알림',
-          message: '챌린지의 종료에 실패했습니다. \n 다시 시도해주세요.',
-          type: 'error',
-          position: 'center',
-        })
-      }
-    },
-    onCancel: () => {
-      return
-    },
-  })
+  try {
+    await api.delete(`/challenge/${props.challengeId}/comment/${commentId}`)
+    // 댓글 목록 새로고침
+    await loadComments(currentPage.value)
+  } catch (error) {
+    console.error('댓글 삭제 실패:', error)
+    alert('댓글 삭제에 실패했습니다.')
+  }
 }
 
 // 댓글 삭제

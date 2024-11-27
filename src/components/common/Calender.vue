@@ -157,8 +157,28 @@ const toggleDatePicker = () => {
 const selectDate = (date) => {
   const selectedDate = new Date(date.date)
 
+  console.log('ss: ', props.isStartDate)
+  console.log('ee: ', props.isEndDate)
+  console.log('start: ', props.startDate)
+  console.log('end: ', props.endDate)
+  // 시작일 선택 시 검증
+  if (props.isStartDate) {
+    if (props.endDate) {
+      const endDate = new Date(props.endDate)
+      if (selectedDate > endDate) {
+        alertStore.showNotify({
+          title: '알림',
+          message: '시작일은 종료일 이전이어야 합니다.',
+          type: 'error',
+          position: 'center',
+        })
+        return
+      }
+    }
+    emit('update:modelValue', date.date)
+  }
   // 종료일 선택 시 검증
-  if (props.isEndDate && props.startDate) {
+  else if (props.isEndDate && props.startDate) {
     const startDate = new Date(props.startDate)
     if (selectedDate < startDate) {
       alertStore.showNotify({
@@ -169,23 +189,8 @@ const selectDate = (date) => {
       })
       return
     }
+    emit('update:modelValue', date.date)
   }
-
-  // 시작일 선택 시 검증
-  if (props.isStartDate && props.endDate) {
-    const endDate = new Date(props.endDate)
-    if (selectedDate > endDate) {
-      alertStore.showNotify({
-        title: '알림',
-        message: '시작일은 종료일 이전이어야 합니다.',
-        type: 'error',
-        position: 'center',
-      })
-      return
-    }
-  }
-
-  emit('update:modelValue', date.date)
   isOpen.value = false
 }
 const prevMonth = () => {

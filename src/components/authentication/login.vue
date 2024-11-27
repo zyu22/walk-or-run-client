@@ -119,8 +119,9 @@ const handleLogin = async () => {
 
       await userStore.updateUserInfo(accessToken)
 
+      console.log('gdgd')
       if (userStore.userRole === 'ADMIN') {
-        router.push({ name: 'adminDashboard' })
+        router.push({ name: 'adminChallenge' })
       } else {
         router.push({ name: 'userDashboard' })
       }
