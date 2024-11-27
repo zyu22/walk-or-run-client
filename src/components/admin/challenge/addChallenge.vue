@@ -77,6 +77,7 @@
             <label class="mb-2 block text-sm font-medium text-gray-700">시작일</label>
             <Calendar
               v-model="challengeForm.challengeCreateDate"
+              :start-date="challengeForm.challengeCreateDate"
               :end-date="challengeForm.challengeDeleteDate"
               :is-start-date="true"
               :is-end-date="false"
@@ -90,6 +91,7 @@
             <Calender
               v-model="challengeForm.challengeDeleteDate"
               :start-date="challengeForm.challengeCreateDate"
+              :end-date="challengeForm.challengeDeleteDate"
               :is-start-date="false"
               :is-end-date="true"
               placeholder="종료일 선택"

@@ -231,6 +231,8 @@ const getChallege = async (page = 1) => {
   }
 
   try {
+    console.log('조회 cc: ', challenges.value.challengeCreateDate)
+    console.log('조회 ee: ', challenges.value.challengeCreateDate)
     const response = await api.get(apiEndpoint, {
       params: {
         page: page, // 백엔드에서 처리하므로 그대로 전달

@@ -319,7 +319,7 @@ const deleteComment = (commentId) => {
       } catch (error) {
         console.error('댓글 삭제 실패:', error)
         alertStore.showNotify({
-          title: '오류',
+          title: '알림',
           message: '댓글 삭제에 실패했습니다.',
           type: 'error',
           position: 'center',
@@ -343,8 +343,6 @@ const updateComment = async (commentId) => {
     await api.put(`/challenge/${props.challengeId}/comment/${commentId}`, {
       commentContent: editingCommentContent.value,
     })
-
-    console.log(currentPage.value)
 
     // 댓글 목록 새로고침
     await loadComments(currentPage.value)
@@ -465,7 +463,7 @@ const cancelParticipation = () => {
       } catch (error) {
         console.error('참여 취소 실패:', error)
         alertStore.showNotify({
-          title: '오류',
+          title: '알림',
           message: '참여 취소에 실패했습니다.',
           type: 'error',
           position: 'center',

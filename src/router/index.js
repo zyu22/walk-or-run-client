@@ -147,34 +147,35 @@ const router = createRouter({
   history: createWebHistory(),
   routes,
 })
-router.beforeEach((to, from, next) => {
+router.beforeEach(async (to, from, next) => {
   const accessToken = localStorage.getItem('accessToken')
   const userStore = useUserStore()
 
-  // 이미 로그인 한 사용자가 auth 페이지 접근 시도할 경우
-  if (accessToken && to.matched.some((record) => record.name === 'auth')) {
-    if (userStore.userRole === 'USER') {
-      return next({ name: 'userDashboard' })
-    } else if (userStore.userRole === 'ADMIN') {
-      return next({ name: 'adminChallenge' })
+  if (accessToken) {
+    // 토큰이 있지만 userStore가 비어있는 경우
+    if (!userStore.userId) {
+      await userStore.updateUserInfo(accessToken)
+    }
+
+    // auth 페이지 접근 시도할 경우 리다이렉트
+    if (to.matched.some((record) => record.name === 'auth')) {
+      return next(
+        userStore.userRole === 'ADMIN' ? { name: 'adminChallenge' } : { name: 'userDashboard' },
+      )
     }
   }
 
-  if (to.path.startsWith('/admin')) {
-    if (userStore.userRole !== 'ADMIN') {
-      return next({ name: 'userDashboard' })
+  // 보호된 라우트 체크
+  if (to.path.startsWith('/admin') || to.path.startsWith('/user')) {
+    if (!accessToken) {
+      return next({ name: 'login' })
     }
-
-    // 정확히 /admin일 때만 challenge로 리다이렉트
-    if (to.path === '/admin') {
-      return next({ name: 'adminChallenge' })
+    // admin 라우트 권한 체크
+    if (to.path.startsWith('/admin') && userStore.userRole !== 'ADMIN') {
+      return next({ name: 'login' })
     }
-
-    // 다른 admin 하위 경로는 그대로 유지
-    return next()
   }
 
-  return next()
+  next()
 })
-
 export default router

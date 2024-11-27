@@ -42,14 +42,19 @@ import ConfirmModal from '@/components/common/ConfirmModal.vue'
 const router = useRouter()
 const userStore = useUserStore()
 
-const isLoggedIn = computed(() => !!userStore.userId)
-const isAdmin = computed(() => userStore.userRole === 'ADMIN')
+const isLoggedIn = computed(() => {
+  console.log('isLoggedIn 체크:', !!userStore.userId)
+  return !!userStore.userId
+})
+
+const isAdmin = computed(() => {
+  console.log('isAdmin 체크:', userStore.userRole === 'ADMIN')
+  return userStore.userRole === 'ADMIN'
+})
 
 const handleLogout = async () => {
   try {
     const response = await api.post('/user/logout')
-    console.log('요청 헤더:', response.config.headers)
-    console.log('로그아웃 응답:', response) // 서버 응답 확인
     userStore.clearUserInfo()
     router.push({ name: 'login' })
   } catch (error) {
@@ -64,35 +69,17 @@ const handleLogout = async () => {
 const checkLoginStatus = async () => {
   try {
     const accessToken = localStorage.getItem('accessToken')
-
-    if (accessToken) {
-      userStore.updateUserInfo(accessToken)
-
-      // userRole에 따른 리다이렉트
-      if (userStore.userRole === 'ADMIN') {
-        if (!router.currentRoute.value.path.startsWith('/admin')) {
-          router.push({ name: 'adminChallenge' })
-        }
-      } else if (userStore.userRole === 'USER') {
-        if (router.currentRoute.value.path.startsWith('/admin')) {
-          router.push({ name: 'userDashboard' })
-        }
-      }
-    } else if (
-      router.currentRoute.value.path.startsWith('/user') ||
-      router.currentRoute.value.path.startsWith('/admin')
-    ) {
-      // 인증이 필요한 페이지에 접근할 때만 리다이렉트
-      router.push({ name: 'login' })
+    if (accessToken && !userStore.userId) {
+      await userStore.updateUserInfo(accessToken)
     }
   } catch (error) {
-    console.error('Error checking login status:', error)
+    console.error('Login status check failed:', error)
     userStore.clearUserInfo()
-    router.push({ name: 'login' })
   }
 }
 
 onMounted(() => {
+  console.log('App.vue가 마운트됨') // 이 로그가 출력되는지 확인
   checkLoginStatus()
 })
 </script>

@@ -179,6 +179,22 @@
                 {{ challenge.challengeIsEnded === 1 ? '종료' : '진행중' }}
               </span>
             </td>
+            <<<<<<< HEAD
+            <!-- 관리 -->
+            <td class="whitespace-nowrap px-6 py-4 text-sm">
+              <button
+                class="mr-2 text-[#00B074] hover:text-[#009563] group-[.is-ended]:text-gray-400"
+                :disabled="challenge.challengeIsEnded === 1"
+              >
+                수정
+              </button>
+              <button
+                class="text-red-600 hover:text-red-900 group-[.is-ended]:text-gray-400"
+                :disabled="challenge.challengeIsEnded === 1"
+              >
+                삭제
+              </button>
+            </td>
           </tr>
         </tbody>
       </table>
