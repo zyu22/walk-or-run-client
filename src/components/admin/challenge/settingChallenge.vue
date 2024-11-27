@@ -108,7 +108,7 @@
             @click="openDetailModal(challenge)"
             :class="[
               'group transition-colors',
-              challenge.dday === '종료' ? 'is-ended bg-gray-50' : 'bg-white',
+              challenge.challengeIsEnded === 1 ? 'is-ended bg-gray-50' : 'bg-white',
             ]"
           >
             <!-- 유형 -->
@@ -169,25 +169,25 @@
               <span
                 class="inline-flex rounded-full px-2 text-xs font-semibold leading-5"
                 :class="
-                  challenge.dday === '종료'
+                  challenge.challengeIsEnded === 1
                     ? 'bg-gray-100 text-gray-800'
                     : 'bg-gray-100 text-green-600'
                 "
               >
-                {{ challenge.dday === '종료' ? '종료' : '진행중' }}
+                {{ challenge.challengeIsEnded === 1 ? '종료' : '진행중' }}
               </span>
             </td>
             <!-- 관리 -->
             <td class="whitespace-nowrap px-6 py-4 text-sm">
               <button
                 class="mr-2 text-[#00B074] hover:text-[#009563] group-[.is-ended]:text-gray-400"
-                :disabled="challenge.dday === '종료'"
+                :disabled="challenge.challengeIsEnded === 1"
               >
                 수정
               </button>
               <button
                 class="text-red-600 hover:text-red-900 group-[.is-ended]:text-gray-400"
-                :disabled="challenge.dday === '종료'"
+                :disabled="challenge.challengeIsEnded === 1"
               >
                 삭제
               </button>
@@ -321,6 +321,8 @@ const getChallenge = async (page = 1) => {
         size: 16,
       },
     })
+
+    console.log(response.data)
     challenges.value = response.data.content
     pageInfo.value = response.data.pageInfo
     currentPage.value = page
@@ -462,7 +464,6 @@ const getChallengeTypeColor = (type) => {
 
 // 카테고리 색상
 const getCategoryColor = (categoryCode) => {
-  console.log(categoryCode)
   const colors = {
     1: 'bg-[gray]/10 text-[#ff6f3b]',
     2: 'bg-[gray]/10 text-[#00B074]',

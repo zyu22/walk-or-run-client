@@ -77,29 +77,21 @@
             <label class="mb-2 block text-sm font-medium text-gray-700">시작일</label>
             <Calendar
               v-model="challengeForm.challengeCreateDate"
+              :start-date="challengeForm.challengeCreateDate"
               :end-date="challengeForm.challengeDeleteDate"
               :is-start-date="true"
+              :is-end-date="false"
               placeholder="시작일 선택"
               :is-in-modal="true"
             />
-            <!-- <input
-              type="date"
-              v-model="selectedCreateDate"
-              :end-date="selectedDeleteDate"
-              :is-start-date="true"
-              class="w-full rounded-lg border border-gray-300 p-3 focus:border-[#ff6f3b] focus:outline-none focus:ring-1"
-            /> -->
           </div>
           <div>
             <label class="mb-2 block text-sm font-medium text-gray-700">종료일</label>
-            <!-- <input
-              type="date"
-              v-model="selectedDeleteDate"
-              class="w-full rounded-lg border border-gray-300 p-3 focus:border-[#ff6f3b] focus:outline-none focus:ring-1"
-            /> -->
             <Calender
               v-model="challengeForm.challengeDeleteDate"
               :start-date="challengeForm.challengeCreateDate"
+              :end-date="challengeForm.challengeDeleteDate"
+              :is-start-date="false"
               :is-end-date="true"
               placeholder="종료일 선택"
               :is-in-modal="true"
@@ -212,10 +204,14 @@ const createChallenge = async () => {
   }
 
   try {
+    console.log('등록 cc: ', challengeForm.value.challengeCreateDate)
+    console.log('등록 ee:', challengeForm.value.challengeDeleteDate)
     // 시작일과 종료일 포맷팅
-    challengeForm.value.challengeCreateDate = `${goalInfo.startDate} 00:00:00`
-    challengeForm.value.challengeDeleteDate = `${goalInfo.endDate} 23:59:59`
+    challengeForm.value.challengeCreateDate = `${challengeForm.value.challengeCreateDate} 00:00:00`
+    challengeForm.value.challengeDeleteDate = `${challengeForm.value.challengeDeleteDate} 23:59:59`
 
+    console.log('cc: ', challengeForm.value.challengeCreateDate)
+    console.log('ee: ', challengeForm.value.challengeDeleteDate)
     // API 요청을 위한 데이터 정제
     const requestData = {
       challengeCategoryCode: challengeForm.value.challengeCategoryCode,
@@ -229,7 +225,12 @@ const createChallenge = async () => {
 
     const response = await api.post('/admin/challenge', requestData)
     if (response.status === 201) {
-      alert('챌린지가 성공적으로 등록되었습니다.')
+      alertStore.showNotify({
+        title: '알림',
+        message: '챌린지가 등록되었습니다.',
+        type: 'success',
+        position: 'top-right',
+      })
       emit('refresh')
       closeAddModal()
     }

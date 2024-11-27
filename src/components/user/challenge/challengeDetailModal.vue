@@ -319,7 +319,7 @@ const deleteComment = (commentId) => {
       } catch (error) {
         console.error('댓글 삭제 실패:', error)
         alertStore.showNotify({
-          title: '오류',
+          title: '알림',
           message: '댓글 삭제에 실패했습니다.',
           type: 'error',
           position: 'center',
@@ -344,8 +344,6 @@ const updateComment = async (commentId) => {
       commentContent: editingCommentContent.value,
     })
 
-    console.log(currentPage.value)
-
     // 댓글 목록 새로고침
     await loadComments(currentPage.value)
 
@@ -354,7 +352,7 @@ const updateComment = async (commentId) => {
   } catch (error) {
     console.error('댓글 수정 실패:', error)
     alertStore.showNotify({
-      title: '오류',
+      title: '알림',
       message: '댓글 수정에 실패했습니다.',
       type: 'error',
       position: 'center',
@@ -377,7 +375,7 @@ const addComment = async () => {
   } catch (error) {
     console.error('댓글 작성 실패:', error)
     alertStore.showNotify({
-      title: '오류',
+      title: '알림',
       message: '댓글 작성에 실패했습니다.',
       type: 'error',
       position: 'center',
@@ -417,7 +415,7 @@ const joinChallenge = async () => {
   } catch (error) {
     console.error('챌린지 참여 실패:', error)
     alertStore.showNotify({
-      title: '오류',
+      title: '알림',
       message: '챌린지 참여에 실패했습니다.',
       type: 'error',
       position: 'center',
@@ -465,7 +463,7 @@ const cancelParticipation = () => {
       } catch (error) {
         console.error('참여 취소 실패:', error)
         alertStore.showNotify({
-          title: '오류',
+          title: '알림',
           message: '참여 취소에 실패했습니다.',
           type: 'error',
           position: 'center',
