@@ -179,22 +179,6 @@
                 {{ challenge.challengeIsEnded === 1 ? '종료' : '진행중' }}
               </span>
             </td>
-            <<<<<<< HEAD
-            <!-- 관리 -->
-            <td class="whitespace-nowrap px-6 py-4 text-sm">
-              <button
-                class="mr-2 text-[#00B074] hover:text-[#009563] group-[.is-ended]:text-gray-400"
-                :disabled="challenge.challengeIsEnded === 1"
-              >
-                수정
-              </button>
-              <button
-                class="text-red-600 hover:text-red-900 group-[.is-ended]:text-gray-400"
-                :disabled="challenge.challengeIsEnded === 1"
-              >
-                삭제
-              </button>
-            </td>
           </tr>
         </tbody>
       </table>
@@ -223,9 +207,9 @@
 
   <!-- 챌린지 상세 모달 -->
   <settingChallengeDetailModal
-    v-if="selectedChallenge && !isModalLoading"
+    v-if="selectedChallenge && !isModalLoading && challengeDetail"
     :challenge="selectedChallenge"
-    :challengeDetail="challengeDetail || {}"
+    :challengeDetail="challengeDetail"
     :challengeType="getChallengeType(selectedChallenge)"
     :initialComments="comments || []"
     :initialCommentPageInfo="commentPageInfo"
@@ -282,7 +266,8 @@ const closeAddModal = () => {
 
 const closeDetailModal = () => {
   selectedChallenge.value = null
-  comments.value = null
+  comments.value = []
+  challengeDetail.value = null
   commentPageInfo.value = {
     currentPage: 1,
     pageSize: 5,
@@ -403,15 +388,17 @@ const openDetailModal = async (challenge) => {
 
   try {
     isModalLoading.value = true
-    selectedChallenge.value = challenge // 선택된 챌린지 설정
+    selectedChallenge.value = challenge
 
-    // 상세 정보와 댓글 동시에 가져오기
     const [detailResponse, commentsResponse] = await Promise.all([
       getChallengeDetail(challenge.challengeId),
       getComments(challenge.challengeId),
     ])
 
-    // 응답 데이터 설정
+    if (!detailResponse) {
+      throw new Error('챌린지 상세 정보를 불러올 수 없습니다.')
+    }
+
     challengeDetail.value = detailResponse
     comments.value = commentsResponse?.content || []
     commentPageInfo.value = commentsResponse?.pageInfo || {
@@ -422,14 +409,12 @@ const openDetailModal = async (challenge) => {
     }
   } catch (error) {
     console.error('모달 데이터 로딩 중 오류:', error)
+    closeDetailModal() // 에러 발생 시 모달 상태 초기화
     alert('데이터를 불러오는데 실패했습니다.')
-    selectedChallenge.value = null // 에러 시 선택된 챌린지 초기화
   } finally {
     isModalLoading.value = false
   }
 }
-
-// 챌린지 상세보기
 const getChallengeDetail = async (challengeId) => {
   try {
     const response = await api.get(`/challenge/${challengeId}`, {
@@ -438,19 +423,19 @@ const getChallengeDetail = async (challengeId) => {
       },
     })
 
-    const data = response.data || {}
-    challengeDetail.value = {
+    if (!response.data) {
+      throw new Error('데이터가 없습니다.')
+    }
+
+    const data = response.data
+    return {
       ...data,
       challengeCreateDate: data.challengeCreateDate ? data.challengeCreateDate.split(' ')[0] : '',
       challengeDeleteDate: data.challengeDeleteDate ? data.challengeDeleteDate.split(' ')[0] : '',
     }
-
-    return challengeDetail.value
   } catch (err) {
     console.error('챌린지 상세 정보 에러:', err)
-    console.error('에러 응답:', err.response) // 에러 응답 상세 확인
-    challengeDetail.value = null
-    throw err // 에러를 상위로 전파
+    return null
   }
 }
 

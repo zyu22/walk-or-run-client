@@ -87,14 +87,24 @@
             <label class="mb-2 block text-sm font-medium text-gray-700">시작일</label>
             <Calender
               v-model="challengeDetail.challengeCreateDate"
-              class="w-full rounded-lg border border-gray-300 p-3 focus:border-[#ff6f3b] focus:outline-none focus:ring-1"
+              :start-date="challengeDetail.challengeCreateDate"
+              :end-date="challengeDetail.challengeDeleteDate"
+              :is-start-date="true"
+              :is-end-date="false"
+              placeholder="시작일 선택"
+              :is-in-modal="true"
             />
           </div>
           <div>
             <label class="mb-2 block text-sm font-medium text-gray-700">종료일</label>
             <Calender
               v-model="challengeDetail.challengeDeleteDate"
-              class="w-full rounded-lg border border-gray-300 p-3 focus:border-[#ff6f3b] focus:outline-none focus:ring-1"
+              :start-date="challengeDetail.challengeCreateDate"
+              :end-date="challengeDetail.challengeDeleteDate"
+              :is-start-date="false"
+              :is-end-date="true"
+              placeholder="종료일 선택"
+              :is-in-modal="true"
             />
           </div>
         </div>
@@ -108,10 +118,19 @@
             수정
           </button>
           <button
+            v-if="props.challengeDetail.challengeIsEnded !== 1"
+            @click="deleteChallenge"
             type="submit"
             class="rounded-lg bg-black px-6 py-2 text-white transition-colors hover:bg-gray-600"
           >
-            {{ props.challengeDetail.challengeIsEnded === 1 ? '종료된 챌린지' : '종료' }}
+            종료
+          </button>
+          <button
+            v-else
+            disabled
+            class="cursor-not-allowed rounded-lg bg-gray-400 px-6 py-2 text-white"
+          >
+            종료된 챌린지
           </button>
         </div>
 
@@ -176,7 +195,7 @@
         </div>
 
         <!-- 댓글 입력창 -->
-        <div class="mt-6">
+        <div class="mt-6" v-if="props.challengeDetail.challengeIsEnded !== 1">
           <textarea
             v-model="newComment"
             placeholder="응원의 한마디 부탁드려요!"
@@ -191,17 +210,22 @@
             댓글 작성
           </button>
         </div>
+        <!-- 종료된 챌린지일 경우 메시지 표시 -->
+        <div v-else class="mt-6 text-center text-gray-500">
+          종료된 챌린지에는 댓글을 작성할 수 없습니다.
+        </div>
       </div>
     </div>
   </div>
 </template>
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue' // onMounted, onUnmounted 추가
 import { useUserStore } from '@/stores/user'
+import { useAlertStore } from '@/stores/alert' // 추가
+import Calender from '@/components/common/Calender.vue'
 import api from '@/api/axios'
 
 const alertStore = useAlertStore()
-const { validateDates } = useValidation()
 // 1. 먼저 props 정의
 const props = defineProps({
   challenge: Object,
@@ -278,63 +302,52 @@ const loadComments = async (page) => {
     isCommentsLoading.value = false
   }
 }
-
-// 챌린지 수정
 const updateChallenge = async () => {
-  // 필수 필드 검증
-  if (!challengeDetail.challengeCategoryCode) {
-    alert('카테고리를 선택해주세요.')
-    return
-  }
-  if (!challengeDetail.challengeTitle) {
-    alert('챌린지 제목을 입력해주세요.')
-    return
-  }
-  if (!challengeDetail.challengeDescription) {
-    alert('챌린지 내용을 입력해주세요.')
-    return
-  }
-  if (!challengeDetail.challengeTargetCnt) {
-    alert('목표 인원을 입력해주세요.')
-    return
-  }
-  if (!challengeDetail.challengeDeleteDate) {
-    alert('종료일을 입력해주세요.')
-    return
-  }
-
+  // 필수 필드 검증 유지
   try {
     await api.put(`/admin/challenge/${props.challengeId}`, {
-      commentContent: editingCommentContent.value,
+      challengeCategoryCode: props.challengeDetail.challengeCategoryCode,
+      challengeTitle: props.challengeDetail.challengeTitle,
+      challengeDescription: props.challengeDetail.challengeDescription,
+      challengeTargetCnt: props.challengeDetail.challengeTargetCnt,
+      challengeCreateDate: props.challengeDetail.challengeCreateDate,
+      challengeDeleteDate: props.challengeDetail.challengeDeleteDate,
     })
 
-    console.log(currentPage.value)
+    alertStore.showNotify({
+      title: '성공',
+      message: '챌린지가 수정되었습니다.',
+      type: 'success',
+    })
 
-    // 댓글 목록 새로고침
-    await loadComments(currentPage.value)
-
-    // 수정 모드 종료
-    cancelEdit()
+    emit('close')
   } catch (error) {
-    console.error('댓글 수정 실패:', error)
-    alert('댓글 수정에 실패했습니다.')
+    console.error('챌린지 수정 실패:', error)
+    alertStore.showNotify({
+      title: '오류',
+      message: '챌린지 수정에 실패했습니다.',
+      type: 'error',
+    })
   }
 }
-
-// 챌린지 삭제
-const deleteChallenge = async (commentId) => {
-  if (!confirm('댓글을 삭제하시겠습니까?')) return
-
+const deleteChallenge = async () => {
   try {
-    await api.delete(`/challenge/${props.challengeId}/comment/${commentId}`)
-    // 댓글 목록 새로고침
-    await loadComments(currentPage.value)
+    await api.delete(`/admin/challenge/${props.challengeId}`)
+    alertStore.showNotify({
+      title: '성공',
+      message: '챌린지가 종료되었습니다.',
+      type: 'success',
+    })
+    emit('close')
   } catch (error) {
-    console.error('댓글 삭제 실패:', error)
-    alert('댓글 삭제에 실패했습니다.')
+    console.error('챌린지 종료 실패:', error)
+    alertStore.showNotify({
+      title: '오류',
+      message: '챌린지 종료에 실패했습니다.',
+      type: 'error',
+    })
   }
 }
-
 // 댓글 삭제
 const deleteComment = async (commentId) => {
   alertStore.showConfirm({
