@@ -34,10 +34,14 @@
             class="w-full rounded-lg border border-gray-300 p-3 focus:border-[#ff6f3b] focus:outline-none focus:ring-1"
           >
             <!-- 첫 번째 옵션: 현재 CategoryCode와 Name -->
-            <option :value="1">뛰거나</option>
+            <option :value="challengeDetail.challengeCategoryCode">
+              {{ challengeDetail.challengeCategoryName }}
+            </option>
 
             <!-- 두 번째 옵션: 반대 CategoryCode와 해당 Name -->
-            <option :value="2">걷거나</option>
+            <option :value="challengeDetail.challengeCategoryCode === 1 ? 2 : 1">
+              {{ challengeDetail.challengeCategoryCode === 1 ? '걷거나' : '뛰거나' }}
+            </option>
           </select>
         </div>
 
@@ -81,20 +85,43 @@
           </div>
         </div>
 
+        <!-- 상세 정보 섹션에 반복 주기 선택 추가 -->
+        <div>
+          <label class="mb-2 block text-sm font-medium text-gray-700">반복 주기</label>
+          <select
+            v-model="challengeDetail.challengeSchedulerCycle"
+            class="w-full rounded-lg border border-gray-300 p-3 focus:border-[#ff6f3b] focus:outline-none focus:ring-1"
+          >
+            <option value="1">일일</option>
+            <option value="2">일주일</option>
+            <option value="3">한달</option>
+          </select>
+        </div>
+
         <!-- 날짜 -->
         <div class="grid grid-cols-2 gap-4">
           <div>
             <label class="mb-2 block text-sm font-medium text-gray-700">시작일</label>
             <Calender
               v-model="challengeDetail.challengeCreateDate"
-              class="w-full rounded-lg border border-gray-300 p-3 focus:border-[#ff6f3b] focus:outline-none focus:ring-1"
+              :end-date="challengeDetail.challengeDeleteDate"
+              :is-start-date="true"
+              :is-end-date="false"
+              placeholder="시작일 선택"
+              :is-in-modal="true"
+              :modal-open="!!challengeDetail"
             />
           </div>
           <div>
             <label class="mb-2 block text-sm font-medium text-gray-700">종료일</label>
             <Calender
               v-model="challengeDetail.challengeDeleteDate"
-              class="w-full rounded-lg border border-gray-300 p-3 focus:border-[#ff6f3b] focus:outline-none focus:ring-1"
+              :start-date="challengeDetail.challengeCreateDate"
+              :is-start-date="false"
+              :is-end-date="true"
+              placeholder="종료일 선택"
+              :is-in-modal="true"
+              :modal-open="!!challengeDetail"
             />
           </div>
         </div>
@@ -108,8 +135,15 @@
             수정
           </button>
           <button
+            @click="deleteChallenge"
             type="submit"
-            class="rounded-lg bg-black px-6 py-2 text-white transition-colors hover:bg-gray-600"
+            :disabled="props.challengeDetail.challengeIsEnded === 1"
+            class="rounded-lg px-6 py-2 text-white"
+            :class="
+              props.challengeDetail.challengeIsEnded === 1
+                ? 'bg-gray-300'
+                : 'bg-black transition-colors hover:bg-gray-300'
+            "
           >
             {{ props.challengeDetail.challengeIsEnded === 1 ? '종료된 챌린지' : '종료' }}
           </button>
@@ -196,12 +230,14 @@
   </div>
 </template>
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
+import Calender from '@/components/common/Calender.vue'
 import { useUserStore } from '@/stores/user'
+import { useAlertStore } from '@/stores/alert'
 import api from '@/api/axios'
 
 const alertStore = useAlertStore()
-const { validateDates } = useValidation()
+
 // 1. 먼저 props 정의
 const props = defineProps({
   challenge: Object,
@@ -210,10 +246,6 @@ const props = defineProps({
   challengeId: {
     type: [String, Number],
     required: true,
-  },
-  modalOpen: {
-    type: Boolean,
-    default: false,
   },
   challengeType: {
     type: String,
@@ -279,50 +311,139 @@ const loadComments = async (page) => {
   }
 }
 
-// 챌린지 수정
+// 상태 변수 추가
+const isUpdating = ref(false)
+
+// 챌린지 수정 함수 수정
 const updateChallenge = async () => {
   // 필수 필드 검증
-  if (!challengeDetail.challengeCategoryCode) {
-    alert('카테고리를 선택해주세요.')
+  if (!props.challengeDetail.challengeCategoryCode) {
+    alertStore.showNotify({
+      title: '알림',
+      message: '카테고리를 선택해주세요.',
+      type: 'error',
+      position: 'center',
+    })
     return
   }
-  if (!challengeDetail.challengeTitle) {
-    alert('챌린지 제목을 입력해주세요.')
+  if (!props.challengeDetail.challengeTitle) {
+    alertStore.showNotify({
+      title: '알림',
+      message: '챌린지 제목을 입력해주세요.',
+      type: 'error',
+      position: 'center',
+    })
     return
   }
-  if (!challengeDetail.challengeDescription) {
-    alert('챌린지 내용을 입력해주세요.')
+  if (!props.challengeDetail.challengeDescription) {
+    alertStore.showNotify({
+      title: '알림',
+      message: '챌린지 내용을 입력해주세요.',
+      type: 'error',
+      position: 'center',
+    })
     return
   }
-  if (!challengeDetail.challengeTargetCnt) {
-    alert('목표 인원을 입력해주세요.')
+  if (!props.challengeDetail.challengeTargetCnt) {
+    alertStore.showNotify({
+      title: '알림',
+      message: '목표 인원을 입력해주세요.',
+      type: 'error',
+      position: 'center',
+    })
     return
   }
-  if (!challengeDetail.challengeDeleteDate) {
-    alert('종료일을 입력해주세요.')
+  if (!props.challengeDetail.challengeSchedulerCycle) {
+    alertStore.showNotify({
+      title: '알림',
+      message: '반복 주기를 선택해주세요.',
+      type: 'error',
+      position: 'center',
+    })
     return
   }
 
   try {
-    await api.put(`/admin/challenge/${props.challengeId}`, {
-      commentContent: editingCommentContent.value,
-    })
+    const response = await api.put(
+      `/admin/challenge/schedule/${props.challengeDetail.challengeId}`,
+      {
+        challengeCategoryCode: props.challengeDetail.challengeCategoryCode,
+        challengeTitle: props.challengeDetail.challengeTitle,
+        challengeDescription: props.challengeDetail.challengeDescription,
+        challengeTargetCnt: props.challengeDetail.challengeTargetCnt,
+        challengeSchedulerCycle: props.challengeDetail.challengeSchedulerCycle,
+        challengeCreateDate: `${props.challengeDetail.challengeCreateDate} 00:00:00`,
+        challengeDeleteDate: `${props.challengeDetail.challengeDeleteDate} 23:59:59`,
+      },
+    )
 
-    console.log(currentPage.value)
-
-    // 댓글 목록 새로고침
-    await loadComments(currentPage.value)
-
-    // 수정 모드 종료
-    cancelEdit()
+    console.log(response)
+    if (response.status === 200) {
+      alertStore.showNotify({
+        title: '알림',
+        message: '챌린지 수정에 성공하였습니다.',
+        type: 'success',
+        position: 'top-right',
+      })
+    }
   } catch (error) {
-    console.error('댓글 수정 실패:', error)
-    alert('댓글 수정에 실패했습니다.')
+    console.error('챌린지 수정 실패:', error)
+    alertStore.showNotify({
+      title: '알림',
+      message: '챌린지 수정에 실패하였습니다.',
+      type: 'success',
+      position: 'center',
+    })
+  } finally {
+    isUpdating.value = false
   }
 }
 
-// 챌린지 삭제
-const deleteChallenge = async (commentId) => {
+// 챌린지 종료 함수
+const deleteChallenge = async () => {
+  if (props.challengeDetail.challengeIsEnded === 1) {
+    alertStore.showNotify({
+      title: '알림',
+      message: '종료된 챌린지는 삭제할 수 없습니다.',
+      type: 'error',
+      position: 'center',
+    })
+    return
+  }
+
+  alertStore.showConfirm({
+    title: '확인',
+    message: '반복 챌린지를 종료하시겠습니까?',
+    onConfirm: async () => {
+      try {
+        await api.delete(`/admin/challenge/schedule/${props.challengeDetail.challengeId}`)
+        emit('close')
+
+        // 성공 알림
+        alertStore.showNotify({
+          title: '알림',
+          message: '반복 챌린지가 종료되었습니다.',
+          type: 'success',
+          position: 'top-right',
+        })
+      } catch (error) {
+        console.error('반복 챌린지 종료 실패:', error)
+        alertStore.showNotify({
+          title: '알림',
+          message: '반복 챌린지 종료 실패했습니다.',
+          type: 'error',
+          position: 'center',
+        })
+      }
+    },
+    onCancel: () => {
+      return
+    },
+  })
+}
+
+// 댓글 삭제 (기존 함수 수정)
+const deleteComment = async (commentId) => {
   if (!confirm('댓글을 삭제하시겠습니까?')) return
 
   try {
@@ -333,40 +454,6 @@ const deleteChallenge = async (commentId) => {
     console.error('댓글 삭제 실패:', error)
     alert('댓글 삭제에 실패했습니다.')
   }
-}
-
-// 댓글 삭제
-const deleteComment = async (commentId) => {
-  alertStore.showConfirm({
-    title: '확인',
-    message: '댓글을 삭제하시겠습니까?',
-    onConfirm: async () => {
-      // async 추가
-      try {
-        await api.delete(`/challenge/${props.challengeId}/comment/${commentId}`)
-        // 댓글 목록 새로고침
-        await loadComments(currentPage.value)
-        // 성공 알림
-        alertStore.showNotify({
-          title: '알림',
-          message: '댓글이 삭제되었습니다.',
-          type: 'success',
-          position: 'top-right',
-        })
-      } catch (error) {
-        console.error('댓글 삭제 실패:', error)
-        alertStore.showNotify({
-          title: '오류',
-          message: '댓글 삭제에 실패했습니다.',
-          type: 'error',
-          position: 'center',
-        })
-      }
-    },
-    onCancel: () => {
-      return
-    },
-  })
 }
 
 // 댓글 추가

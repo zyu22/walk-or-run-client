@@ -55,8 +55,15 @@
     </div>
 
     <!-- 에러 상태 -->
-    <div v-else-if="error" class="py-20 text-center text-red-500">
-      {{ error }}
+    <div v-else-if="error" class="flex flex-col items-center justify-center py-20">
+      <p class="text-lg text-gray-500">{{ error }}</p>
+      <button
+        v-if="error === '아직 등록된 챌린지가 없습니다.'"
+        @click="openAddmodal"
+        class="mt-4 rounded-lg bg-[#ff6f3b] px-4 py-2 text-white transition-colors hover:bg-opacity-70"
+      >
+        첫 챌린지 등록하기
+      </button>
     </div>
 
     <!-- 테이블 -->
@@ -94,11 +101,6 @@
             >
               상태
             </th>
-            <th
-              class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500"
-            >
-              관리
-            </th>
           </tr>
         </thead>
         <tbody class="divide-y divide-gray-200 bg-white">
@@ -107,7 +109,7 @@
             :key="challenge.challengeId"
             @click="openDetailModal(challenge)"
             :class="[
-              'group transition-colors',
+              'group cursor-pointer transition-colors hover:bg-gray-50',
               challenge.challengeIsEnded === 1 ? 'is-ended bg-gray-50' : 'bg-white',
             ]"
           >
@@ -177,6 +179,7 @@
                 {{ challenge.challengeIsEnded === 1 ? '종료' : '진행중' }}
               </span>
             </td>
+            <<<<<<< HEAD
             <!-- 관리 -->
             <td class="whitespace-nowrap px-6 py-4 text-sm">
               <button
@@ -252,7 +255,7 @@ const isModalLoading = ref(false) // 모달 로딩 상태
 const challenges = ref([])
 const isLoading = ref(false)
 const isAddModalOpen = ref(false)
-const isDetailModalOpen = ref(false)
+
 const error = ref(null)
 const currentPage = ref(1)
 const pageInfo = ref({
@@ -293,15 +296,29 @@ const refreshChallenges = () => {
   getChallenge(currentPage.value)
 }
 
-// 필터링된 챌린지 목록
 const filteredChallenges = computed(() => {
-  if (filterType.value === '전체') {
-    return challenges.value
+  // 현재 시간 가져오기
+  const currentDate = new Date()
+
+  // 기본 필터링 (타입에 따른)
+  let filtered = challenges.value
+
+  if (filterType.value !== '전체') {
+    filtered = filtered.filter((challenge) => getChallengeType(challenge) === filterType.value)
   }
-  return challenges.value.filter((challenge) => getChallengeType(challenge) === filterType.value)
+
+  // 각 챌린지에 대해 isEnded 상태를 계산
+  filtered = filtered.map((challenge) => ({
+    ...challenge,
+    challengeIsEnded:
+      challenge.challengeIsEnded === 1 || new Date(challenge.challengeDeleteDate) < currentDate
+        ? 1
+        : 0,
+  }))
+
+  return filtered
 })
 
-// API 호출 함수
 const getChallenge = async (page = 1) => {
   isLoading.value = true
   error.value = null
@@ -318,11 +335,22 @@ const getChallenge = async (page = 1) => {
     const response = await api.get(apiEndpoint, {
       params: {
         page: page,
-        size: 16,
+        size: 15,
       },
     })
 
-    console.log(response.data)
+    if (response.status === 204) {
+      challenges.value = []
+      pageInfo.value = {
+        currentPage: 1,
+        pageSize: 15,
+        totalElements: 0,
+        totalPages: 0,
+      }
+      error.value = '아직 등록된 챌린지가 없습니다.'
+      return
+    }
+
     challenges.value = response.data.content
     pageInfo.value = response.data.pageInfo
     currentPage.value = page
@@ -367,26 +395,35 @@ const getChallengeType = (challenge) => {
   if (diffDays <= 31) return '월간'
   return '이벤트'
 }
-
 const openDetailModal = async (challenge) => {
   if (!challenge?.challengeId) {
     console.error('유효하지 않은 챌린지:', challenge)
     return
   }
 
-  selectedChallenge.value = challenge
-
   try {
     isModalLoading.value = true
+    selectedChallenge.value = challenge // 선택된 챌린지 설정
 
-    const detailPromise = getChallengeDetail(challenge.challengeId)
-    const commentsPromise = getComments(challenge.challengeId)
+    // 상세 정보와 댓글 동시에 가져오기
+    const [detailResponse, commentsResponse] = await Promise.all([
+      getChallengeDetail(challenge.challengeId),
+      getComments(challenge.challengeId),
+    ])
 
-    const [detailResponse, commentsResponse] = await Promise.all([detailPromise, commentsPromise])
+    // 응답 데이터 설정
+    challengeDetail.value = detailResponse
+    comments.value = commentsResponse?.content || []
+    commentPageInfo.value = commentsResponse?.pageInfo || {
+      currentPage: 1,
+      pageSize: 5,
+      totalElements: 0,
+      totalPages: 0,
+    }
   } catch (error) {
     console.error('모달 데이터 로딩 중 오류:', error)
-    // 에러 발생 시에도 사용자에게 알림
     alert('데이터를 불러오는데 실패했습니다.')
+    selectedChallenge.value = null // 에러 시 선택된 챌린지 초기화
   } finally {
     isModalLoading.value = false
   }
@@ -404,13 +441,8 @@ const getChallengeDetail = async (challengeId) => {
     const data = response.data || {}
     challengeDetail.value = {
       ...data,
-      // 날짜 값을 `YYYY-MM-DD` 형식으로 변환
-      challengeCreateDate: data.challengeCreateDate
-        ? new Date(data.challengeCreateDate).toISOString().split('T')[0]
-        : '',
-      challengeDeleteDate: data.challengeDeleteDate
-        ? new Date(data.challengeDeleteDate).toISOString().split('T')[0]
-        : '',
+      challengeCreateDate: data.challengeCreateDate ? data.challengeCreateDate.split(' ')[0] : '',
+      challengeDeleteDate: data.challengeDeleteDate ? data.challengeDeleteDate.split(' ')[0] : '',
     }
 
     return challengeDetail.value

@@ -109,9 +109,12 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import { useAlertStore } from '@/stores/alert'
+import { useUserStore } from '@/stores/user'
 
+const userStore = useUserStore()
 const emit = defineEmits(['logout'])
-
+const alertStore = useAlertStore()
 const router = useRouter()
 const route = useRoute()
 const isChallengeOpen = ref(false)
@@ -123,8 +126,14 @@ const isChallengeMenuActive = computed(() => {
 const toggleChallenge = () => {
   isChallengeOpen.value = !isChallengeOpen.value
 }
-
-const handleLogout = () => {
-  emit('logout')
+const handleLogout = async () => {
+  try {
+    userStore.clearUserInfo()
+    await router.push({ name: 'login' })
+  } catch (error) {
+    console.error('로그아웃 실패:', error)
+    userStore.clearUserInfo()
+    await router.push({ name: 'login' })
+  }
 }
 </script>

@@ -113,7 +113,7 @@ const routes = [
     component: AdminView,
     children: [
       {
-        path: '',
+        path: 'challenge', // challenge 경로 명시적 추가
         name: 'adminChallenge',
         component: settingChallenge,
       },
@@ -147,33 +147,35 @@ const router = createRouter({
   history: createWebHistory(),
   routes,
 })
-
-router.beforeEach((to, from, next) => {
+router.beforeEach(async (to, from, next) => {
   const accessToken = localStorage.getItem('accessToken')
   const userStore = useUserStore()
 
-  // 이미 로그인 한 사용자가 auth 페이지 접근 시도할 경우
-  if (accessToken && to.matched.some((record) => record.name === 'auth')) {
-    if (userStore.userRole === 'USER') {
-      return next({ name: 'userDashboard' })
-    } else if (userStore.userRole === 'ADMIN') {
-      return next({ name: 'adminChallenge' })
+  if (accessToken) {
+    // 토큰이 있지만 userStore가 비어있는 경우
+    if (!userStore.userId) {
+      await userStore.updateUserInfo(accessToken)
+    }
+
+    // auth 페이지 접근 시도할 경우 리다이렉트
+    if (to.matched.some((record) => record.name === 'auth')) {
+      return next(
+        userStore.userRole === 'ADMIN' ? { name: 'adminChallenge' } : { name: 'userDashboard' },
+      )
     }
   }
 
-  // 로그인이 필요한 페이지 접근 제어
-  if (!accessToken && to.path.startsWith('/user')) {
-    return next({ name: 'login' })
-  }
-
-  // admin 경로 접근 제어
-  if (to.path.startsWith('/admin')) {
-    if (userStore.userRole !== 'ADMIN') {
-      return next({ name: 'userDashboard' })
+  // 보호된 라우트 체크
+  if (to.path.startsWith('/admin') || to.path.startsWith('/user')) {
+    if (!accessToken) {
+      return next({ name: 'login' })
+    }
+    // admin 라우트 권한 체크
+    if (to.path.startsWith('/admin') && userStore.userRole !== 'ADMIN') {
+      return next({ name: 'login' })
     }
   }
 
-  return next()
+  next()
 })
-
 export default router

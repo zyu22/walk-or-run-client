@@ -2,14 +2,15 @@
   <div
     v-if="isOpen"
     class="fixed inset-0 z-50 flex items-center justify-center overflow-hidden bg-black bg-opacity-50"
+    @click.self="handleClose"
   >
     <div class="modal-container w-full max-w-2xl overflow-y-auto rounded-lg bg-white p-8">
       <!-- 헤더 -->
       <div class="mb-6 flex items-start justify-between">
         <div>
-          <h2 class="font-paperlogy text-4xl font-bold text-gray-900">챌린지 추가</h2>
+          <h2 class="font-paperlogy text-4xl font-bold text-gray-900">반복 챌린지 추가</h2>
         </div>
-        <button @click="closeAddModal" class="text-gray-500 hover:text-gray-700">
+        <button @click="handleClose" type="button" class="text-gray-500 hover:text-gray-700">
           <span class="sr-only">Close</span>
           <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path
@@ -71,13 +72,26 @@
           />
         </div>
 
+        <!-- 반복 주기 선택 -->
+        <div>
+          <label class="mb-2 block text-sm font-medium text-gray-700">반복 주기</label>
+          <select
+            v-model="challengeForm.challengeSchedulerCycle"
+            class="w-full rounded-lg border border-gray-300 p-3 focus:border-[#ff6f3b] focus:outline-none focus:ring-1"
+          >
+            <option value="">반복 주기 선택</option>
+            <option value="1">일일</option>
+            <option value="2">주간</option>
+            <option value="3">월간</option>
+          </select>
+        </div>
+
         <!-- 날짜 선택 -->
         <div class="grid grid-cols-2 gap-4">
           <div>
             <label class="mb-2 block text-sm font-medium text-gray-700">시작일</label>
-            <Calendar
+            <Calender
               v-model="challengeForm.challengeCreateDate"
-              :start-date="challengeForm.challengeCreateDate"
               :end-date="challengeForm.challengeDeleteDate"
               :is-start-date="true"
               :is-end-date="false"
@@ -91,7 +105,6 @@
             <Calender
               v-model="challengeForm.challengeDeleteDate"
               :start-date="challengeForm.challengeCreateDate"
-              :end-date="challengeForm.challengeDeleteDate"
               :is-start-date="false"
               :is-end-date="true"
               placeholder="종료일 선택"
@@ -104,7 +117,8 @@
         <!-- 버튼 -->
         <div class="flex justify-end space-x-3 pt-4">
           <button
-            @click="createChallenge"
+            @click="createScheduleChallenge"
+            type="button"
             class="rounded-lg bg-[#ff6f3b] px-4 py-2 text-white hover:bg-[#ff5722]"
             :disabled="isSubmitting"
           >
@@ -117,14 +131,13 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, defineProps, defineEmits } from 'vue'
 import { useUserStore } from '@/stores/user'
-import api from '@/api/axios'
-import Calendar from '@/components/common/Calender.vue'
-import { useAlertStore } from '@/stores/alert'
 import Calender from '@/components/common/Calender.vue'
+import api from '@/api/axios'
+import { useAlertStore } from '@/stores/alert'
 
-const alertStore = useAlertStore()
+// Props 정의
 const props = defineProps({
   isOpen: {
     type: Boolean,
@@ -132,123 +145,93 @@ const props = defineProps({
   },
 })
 
+// Emits 정의
 const emit = defineEmits(['close', 'refresh'])
+const alertStore = useAlertStore()
 const userStore = useUserStore()
 const isSubmitting = ref(false)
 
-const challengeForm = ref({
+// 폼 데이터 초기화
+const initializeForm = () => ({
   challengeCategoryCode: '',
   challengeTitle: '',
   challengeDescription: '',
-  challengeAuthorId: '',
   challengeTargetCnt: null,
   challengeCreateDate: '',
   challengeDeleteDate: '',
   challengeAuthorId: userStore.userId,
+  challengeSchedulerCycle: '', // 추가된 필드
 })
 
-// API 호출 시
-const createChallenge = async () => {
+const challengeForm = ref(initializeForm())
+
+// 모달 닫기
+const handleClose = () => {
+  challengeForm.value = initializeForm()
+  emit('close')
+}
+
+// 챌린지 생성
+const createScheduleChallenge = async () => {
   // 필수 필드 검증
-  if (!challengeForm.value.challengeCategoryCode) {
-    alertStore.showNotify({
-      title: '알림',
-      message: '카테고리를 선택해주세요.',
-      type: 'error',
-      position: 'center',
-    })
-    return
-  }
-  if (!challengeForm.value.challengeTitle) {
-    alertStore.showNotify({
-      title: '알림',
-      message: '챌린지 제목을 입력해주세요.',
-      type: 'error',
-      position: 'center',
-    })
-    return
-  }
-  if (!challengeForm.value.challengeDescription) {
-    alertStore.showNotify({
-      title: '알림',
-      message: '챌린지 내용을 입력해주세요.',
-      type: 'error',
-      position: 'center',
-    })
-    return
-  }
-  if (!challengeForm.value.challengeTargetCnt) {
-    alertStore.showNotify({
-      title: '알림',
-      message: '목표 인원을 입력해주세요.',
-      type: 'error',
-      position: 'center',
-    })
-    return
+  const validations = [
+    { field: 'challengeCategoryCode', message: '카테고리를 선택해주세요.' },
+    { field: 'challengeTitle', message: '챌린지 제목을 입력해주세요.' },
+    { field: 'challengeDescription', message: '챌린지 내용을 입력해주세요.' },
+    { field: 'challengeTargetCnt', message: '목표 인원을 입력해주세요.' },
+    { field: 'challengeSchedulerCycle', message: '반복 주기를 선택해주세요.' },
+  ]
+
+  for (const validation of validations) {
+    if (!challengeForm.value[validation.field]) {
+      alertStore.showNotify({
+        title: '알림',
+        message: validation.message,
+        type: 'error',
+        position: 'center',
+      })
+      return
+    }
   }
 
   try {
-    // API 요청을 위한 데이터 정제
+    isSubmitting.value = true
+
+    // 날짜 포맷팅
     const requestData = {
-      challengeCategoryCode: challengeForm.value.challengeCategoryCode,
-      challengeTitle: challengeForm.value.challengeTitle,
-      challengeAuthorId: userStore.userId,
-      challengeDescription: challengeForm.value.challengeDescription,
-      challengeTargetCnt: challengeForm.value.challengeTargetCnt,
-      challengeCreateDate: `${challengeForm.value.challengeCreateDate} 00:00:00`,
-      challengeDeleteDate: `${challengeForm.value.challengeDeleteDate} 23:59:59`,
+      ...challengeForm.value,
+      challengeCreateDate: challengeForm.value.challengeCreateDate
+        ? `${challengeForm.value.challengeCreateDate} 00:00:00`
+        : undefined,
+      challengeDeleteDate: challengeForm.value.challengeDeleteDate
+        ? `${challengeForm.value.challengeDeleteDate} 23:59:59`
+        : undefined,
     }
 
-    console.log('카테고리 코드:', requestData.challengeCategoryCode)
-    console.log('제목:', requestData.challengeTitle)
-    console.log('작성자 ID:', requestData.challengeAuthorId)
-    console.log('설명:', requestData.challengeDescription)
-    console.log('목표 수:', requestData.challengeTargetCnt)
-    console.log('생성일:', requestData.challengeCreateDate)
-    console.log('삭제일:', requestData.challengeDeleteDate)
+    const response = await api.post('/admin/challenge/schedule', requestData)
 
-    const response = await api.post('/admin/challenge', {
-      challengeCategoryCode: challengeForm.value.challengeCategoryCode,
-      challengeTitle: challengeForm.value.challengeTitle,
-      challengeAuthorId: userStore.userId,
-      challengeDescription: challengeForm.value.challengeDescription,
-      challengeTargetCnt: challengeForm.value.challengeTargetCnt,
-      challengeCreateDate: `${challengeForm.value.challengeCreateDate} 00:00:00`,
-      challengeDeleteDate: `${challengeForm.value.challengeDeleteDate} 23:59:59`,
-    })
+    console.log(response)
     if (response.status === 201) {
       alertStore.showNotify({
         title: '알림',
-        message: '챌린지가 성공적으로 등록되었습니다.',
+        message: '반복 챌린지가 성공적으로 등록되었습니다.',
         type: 'success',
-        position: 'top-right',
+        position: 'center',
       })
+      handleClose()
       emit('refresh')
-      closeAddModal()
     }
   } catch (error) {
     console.error('챌린지 등록 실패:', error)
     alertStore.showNotify({
       title: '알림',
-      message: '챌린지 등록에 실패하였습니다.\n 다시 시도해주세요.',
+      message: '챌린지 등록에 실패했습니다. 다시 시도해주세요.',
       type: 'error',
       position: 'center',
     })
+  } finally {
+    isSubmitting.value = false
   }
-}
-
-const closeAddModal = () => {
-  // 폼 초기화
-  challengeForm.value = {
-    challengeCategoryCode: '',
-    challengeTitle: '',
-    challengeDescription: '',
-    challengeTargetCnt: null,
-    challengeCreateDate: '',
-    challengeDeleteDate: '',
-    challengeAuthorId: userStore.userId,
-  }
-  emit('close')
 }
 </script>
 

@@ -6,7 +6,8 @@ export default {
       fontFamily: {
         paperlogy: ['Paperlogy-8ExtraBold', 'sans-serif'],
         gmarket: ['LeferiBaseType-RegularA', 'sans-serif'],
-        sans: ['LeferiBaseType-RegularA', 'Arial', 'sans-serif'],
+        Pretendard: ['Pretendard-Regular', 'sans-serif'],
+        sans: ['Pretendard-Regular', 'Arial', 'sans-serif'],
       },
     },
   },

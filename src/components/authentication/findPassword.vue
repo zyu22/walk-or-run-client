@@ -184,15 +184,19 @@ const checkUserPassword = async () => {
     const response = await api.post('auth/password/find', {
       userEmail: findForm.email,
       userPasswordQuestionId: findForm.passwordQuestionId,
-      userPasswordAnswer: findForm.passwordQuestionAnswer,
+      userPasswordAnswer: findForm.passwordQuestionAnswer.trim(),
     })
 
     if (response.status == 200) {
       foundUser.value = true
-    } else {
-      alert('해당하는 유저가 없습니다. 확인해주세요.')
     }
   } catch (error) {
+    alertStore.showNotify({
+      title: '알림',
+      message: '이메일 및 비밀번호 질문과 답변을 확인해주세요.',
+      type: 'error',
+      position: 'center',
+    })
     console.error('에러 상세:', {
       status: error.response?.status,
       statusText: error.response?.statusText,
@@ -208,7 +212,13 @@ const togglePassword = () => {
 
 const updatePassword = async () => {
   if (resetForm.password !== resetForm.confirmPassword) {
-    alert('비밀번호가 일치하지 않습니다.')
+    alertStore.showNotify({
+      title: '알림',
+      message: '비밀번호가 일치하지 않습니다.',
+      type: 'error',
+      position: 'center',
+    })
+    return
     return
   }
 
